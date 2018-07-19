@@ -6,3 +6,5 @@ var
 develop-eggs
 src/senaite.api
 src/senaite.core
+dist
+build
