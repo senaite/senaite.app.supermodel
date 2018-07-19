@@ -4,12 +4,21 @@ from setuptools import setup, find_packages
 
 version = "1.0.0"
 
+with open("docs/About.rst", "r") as fh:
+    long_description = fh.read()
+
+with open("docs/Changelog.rst", "r") as fh:
+    long_description += "\n\n"
+    long_description += "Changelog\n"
+    long_description += "=========\n\n"
+    long_description += fh.read()
 
 setup(
     name="senaite.core.supermodel",
     version=version,
-    description="SENAITE CORE SUPERMODEL",
-    long_description="",
+    description="A beautiful content wrapper for SENAITE that you will love",
+    long_description=long_description,
+    # long_description_content_type="text/markdown",
     # Get more strings from
     # http://pypi.python.org/pypi?:action=list_classifiers
     classifiers=[

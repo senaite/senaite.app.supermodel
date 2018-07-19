@@ -1,7 +1,7 @@
 <div align="center">
 
   <a href="https://github.com/senaite/senaite.core.supermodel">
-    <img src="static/logo.png" alt="senaite.core.supermodel" height="64" />
+    <img src="static/logo.png" alt="senaite.core.supermodel" height="128" />
   </a>
 
   <p>A beautiful content wrapper for SENAITE that you will love</p>
