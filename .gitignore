@@ -8,3 +8,5 @@ src/senaite.api
 src/senaite.core
 dist
 build
+*.pyc
+*.egg-info
