@@ -5,7 +5,7 @@
   </a>
 
   <p>A beautiful content wrapper for SENAITE that you will love</p>
-  
+
   <div>
     <a href="https://pypi.python.org/pypi/senaite.core.supermodel">
       <img src="https://img.shields.io/pypi/v/senaite.core.supermodel.svg?style=flat-square" alt="pypi-version" />
@@ -52,6 +52,6 @@ well to all the metadata columns of the primary catalog of this object:
 
     >>> supermodel.MySchemaField'
     'Value of MySchemaField'
-    
+
 Please read the [full functional doctest](src/senaite/core/supermodel/docs/SUPERMODEL.rst)
 to see the super powers of the `SuperModel` in action.
