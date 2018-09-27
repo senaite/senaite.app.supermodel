@@ -247,13 +247,7 @@ class SuperModel(object):
         """
         if not api.is_object(brain_or_object):
             raise TypeError("Invalid object type %r" % brain_or_object)
-        portal_type = api.get_portal_type(brain_or_object)
-        archetype_tool = api.get_tool("archetype_tool")
-        catalogs = archetype_tool.getCatalogsByType(portal_type)
-        if not catalogs:
-            logger.warn("No registered catalog found for portal_type={}"
-                        .format(portal_type))
-            return api.get_tool("uid_catalog")
+        catalogs = api.get_catalogs_for(brain_or_object, default="uid_catalog")
         return catalogs[0]
 
     def get_brain_by_uid(self, uid):
