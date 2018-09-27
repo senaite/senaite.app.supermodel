@@ -46,6 +46,8 @@ class SuperModel(object):
             return self.init_with_brain(thing)
         if api.is_object(thing):
             return self.init_with_instance(thing)
+        if thing == "0":
+            return self.init_with_instance(api.get_portal())
 
         raise TypeError(
             "Can not initialize a SuperModel with '{}'".format(repr(thing)))
