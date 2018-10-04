@@ -35,16 +35,46 @@ class SuperModel(object):
     """
     implements(ISuperModel)
 
-    def __init__(self, uid):
-        logger.debug("SuperModel({})".format(uid))
+    def __init__(self, thing):
 
+        self.data = dict()
+        self.__empty_marker = object
+
+        if api.is_uid(thing):
+            return self.init_with_uid(thing)
+        if api.is_brain(thing):
+            return self.init_with_brain(thing)
+        if api.is_object(thing):
+            return self.init_with_instance(thing)
+        if thing == "0":
+            return self.init_with_instance(api.get_portal())
+
+        raise TypeError(
+            "Can not initialize a SuperModel with '{}'".format(repr(thing)))
+
+    def init_with_uid(self, uid):
+        """Initialize with an UID
+        """
         self._uid = uid
         self._brain = None
         self._catalog = None
         self._instance = None
 
-        self.__empty_marker = object
-        self.data = dict()
+    def init_with_brain(self, brain):
+        """Initialize with a catalog brain
+        """
+        self._uid = api.get_uid(brain)
+        self._brain = brain
+        self._catalog = self.get_catalog_for(brain)
+        self._instance = None
+
+    def init_with_instance(self, instance):
+        """Initialize with an instance object
+        """
+        self._uid = api.get_uid(instance)
+        self._brain = None
+        self._catalog = self.get_catalog_for(instance)
+        self._instance = instance
 
     def __repr__(self):
         return "<{}:UID({})>".format(
@@ -201,10 +231,6 @@ class SuperModel(object):
         if self._brain is None:
             logger.debug("SuperModel::brain: *Fetch catalog brain*")
             self._brain = self.get_brain_by_uid(self.uid)
-            # refetch the brain with the correct catalog
-            results = self.catalog({"UID": self.uid})
-            if results and len(results) == 1:
-                self._brain = results[0]
         return self._brain
 
     @property
@@ -213,25 +239,39 @@ class SuperModel(object):
         """
         if self._catalog is None:
             logger.debug("SuperModel::catalog: *Fetch catalog*")
-            archetype_tool = api.get_tool("archetype_tool")
-            portal_type = self.brain.portal_type
-            catalogs = archetype_tool.getCatalogsByType(portal_type)
-            if catalogs is None:
-                logger.warn("No registered catalog found for portal_type={}"
-                            .format(portal_type))
-                return api.get_tool("uid_catalog")
-            self._catalog = catalogs[0]
+            self._catalog = self.get_catalog_for(self.brain)
         return self._catalog
 
+    def get_catalog_for(self, brain_or_object):
+        """Return the primary catalog for the given brain or object
+        """
+        if not api.is_object(brain_or_object):
+            raise TypeError("Invalid object type %r" % brain_or_object)
+        catalogs = api.get_catalogs_for(brain_or_object, default="uid_catalog")
+        return catalogs[0]
+
     def get_brain_by_uid(self, uid):
-        """Lookup brain in the UID catalog
+        """Lookup brain from the right catalog
         """
         if uid == "0":
             return api.get_portal()
-        uid_catalog = api.get_tool("uid_catalog")
-        results = uid_catalog({"UID": uid})
+
+        # ensure we have the primary catalog
+        if self._catalog is None:
+            uid_catalog = api.get_tool("uid_catalog")
+            results = uid_catalog({"UID": uid})
+            if len(results) != 1:
+                raise ValueError("No object found for UID '{}'".format(uid))
+            brain = results[0]
+            self._catalog = self.get_catalog_for(brain)
+
+        # Fetch the brain with the primary catalog
+        results = self.catalog({"UID": self.uid})
+        if not results:
+            raise ValueError("No results found for UID '{}'".format(uid))
         if len(results) != 1:
-            raise ValueError("Failed to get brain by UID")
+            raise ValueError("Found more than one object for UID '{}'"
+                             .format(uid))
         return results[0]
 
     @returns_super_model

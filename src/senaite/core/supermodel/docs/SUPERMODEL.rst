@@ -21,8 +21,8 @@ Import it first::
 
     >>> from senaite.core.supermodel import SuperModel
 
-Now we can simply create a new `SuperModel` instance and pass in the Unique ID
-(UID) of a content object.
+Now we can simply create a new `SuperModel` instance by passing in the Unique ID
+(UID) of a content object, a catalog brain or an instance object.
 
 So let's create a client for that::
 
@@ -39,21 +39,46 @@ So let's create a client for that::
      >>> client.getClientID()
      'HH'
 
-Now we can wrap this client into a `SuperModel`::
+Now a `SuperModel` can be instantiated via the UID::
 
     >>> uid = api.get_uid(client)
     >>> supermodel = SuperModel(uid)
 
-This creates a new `SuperModel` instance for us::
+It can be also instantiated via a catalog brain::
+
+    >>> uid_catalog = api.get_tool("uid_catalog")
+    >>> brain = uid_catalog({"UID": uid})[0]
+    >>> supermodel2 = SuperModel(brain)
+
+And it can be instantiated with the content object directly::
+
+    >>> supermodel3 = SuperModel(client)
+
+All of them create new `SuperModel` instances for us::
 
     >>> supermodel
-    <SuperModel:UID(...)> 
+    <SuperModel:UID(...)>
+
+    >>> supermodel2
+    <SuperModel:UID(...)>
+
+    >>> supermodel3
+    <SuperModel:UID(...)>
+
+All of them should be equal::
+
+    >>> supermodel == supermodel2 == supermodel3
+    True
+
+    >>> supermodel.catalog == supermodel2.catalog == supermodel3.catalog
+    True
+
 
 We have now full access to the `Client` schema::
 
     >>> supermodel.Name
     'Happy Hills'
-    
+
     >>> supermodel.ClientID
     'HH'
 
@@ -65,18 +90,17 @@ catalog are lazily fetched::
 
     >>> supermodel.brain
     <Products.ZCatalog.Catalog.mybrains object at ...>
-    
 
 This gives full access to the catalog metadata and content schema::
 
     >>> supermodel.review_state
     'active'
-   
+
 It is also possible to call member functions directly::
 
     >>> supermodel.getPhysicalPath()
     ('', 'plone', 'clients', 'client-1')
-    
+
 
 Not impressed yet?
 ------------------
@@ -179,7 +203,7 @@ therefore possible to traverse schema fields from referenced objects directly::
 
     >>> supermodel.Client.Name
     'Happy Hills'
-    
+
 Furthermore, all fields that were accessed once are internally cached. Another
 fetch would therefore return the cached value instead of getting the attribute
 from the database object::
@@ -189,7 +213,7 @@ from the database object::
 
     >>> supermodel.Client.ClientID
     'HH'
-    
+
     >>> sorted(supermodel.Client.data.items())
     [('ClientID', 'HH'), ('Name', 'Happy Hills')]
 
