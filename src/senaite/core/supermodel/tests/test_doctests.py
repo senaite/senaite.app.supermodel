@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright 2016-2017 BECHEM GmbH.
+# This file is part of SENAITE.CORE.SUPERMODEL
+#
+# Copyright 2018 by it's authors.
 
 import doctest
 

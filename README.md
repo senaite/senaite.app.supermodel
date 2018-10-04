@@ -5,7 +5,7 @@
   </a>
 
   <p>A beautiful content wrapper for SENAITE that you will love</p>
-  
+
   <div>
     <a href="https://pypi.python.org/pypi/senaite.core.supermodel">
       <img src="https://img.shields.io/pypi/v/senaite.core.supermodel.svg?style=flat-square" alt="pypi-version" />

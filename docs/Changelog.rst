@@ -1,4 +1,4 @@
-1.0.1 (unreleased)
+1.1.0 (2018-10-04)
 ------------------
 
 - #2 Allow to pass in a catalog brain or instance to initialize a SuperModel

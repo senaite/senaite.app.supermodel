@@ -53,7 +53,7 @@ well to all the metadata columns of the primary catalog of this object::
 
     >>> supermodel.MySchemaField'
     'Value of MySchemaField'
-    
+
 Please read the `full functional doctest`_ to see the super powers of the
 `SuperModel` in action.
 
