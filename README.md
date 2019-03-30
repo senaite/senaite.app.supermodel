@@ -58,3 +58,9 @@ well to all the metadata columns of the primary catalog of this object:
 
 Please read the [full functional doctest](src/senaite/core/supermodel/docs/SUPERMODEL.rst)
 to see the super powers of the `SuperModel` in action.
+
+
+## Installation
+
+SENAITE.CORE.SUPERMODEL is a dependency of SENAITE.CORE and therefore no
+additional installation steps are required.
