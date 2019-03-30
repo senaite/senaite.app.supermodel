@@ -185,7 +185,7 @@ Finally, the `AnalysisRequest` can be created::
     >>> service_uids = [analysisservice.UID()]
     >>> ar = create_analysisrequest(client, request, values, service_uids)
     >>> ar
-    <AnalysisRequest at /plone/clients/client-1/water-0001-R01>
+    <AnalysisRequest at /plone/clients/client-1/water-0001>
 
 Let's give this Analysis Request now super powers and wrap it into a `SuperModel`::
 
