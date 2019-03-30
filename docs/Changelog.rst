@@ -1,7 +1,7 @@
-1.2.0 (unreleased)
+1.2.0 (2019-03-30)
 ------------------
 
-- no changes yet
+- Compatibility release for SENAITE CORE 1.3.0
 
 
 1.1.0 (2018-10-04)

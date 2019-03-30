@@ -22,6 +22,9 @@
     <a href="#">
       <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="pr" />
     </a>
+    <a href="https://www.senaite.com">
+      <img src="https://img.shields.io/badge/Made%20for%20SENAITE-%E2%AC%A1-lightgrey.svg" alt="Made for SENAITE" />
+    </a>
   </div>
 </div>
 

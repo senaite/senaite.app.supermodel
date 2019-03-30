@@ -1,10 +1,10 @@
-.. image:: https://raw.githubusercontent.com/senaite/senaite.core.supermodel/master/static/logo.png
+.. image:: https://raw.githubusercontent.com/senaite/senaite.core.supermodel/master/static/logo_pypi.png
    :target: https://github.com/senaite/senaite.core.supermodel#readme
    :alt: senaite.core.supermodel
    :height: 128
-   :align: center
 
-- **SENAITE.CORE.SUPERMODEL**: *A beautiful content wrapper for SENAITE that you will love*
+*A beautiful content wrapper for SENAITE that you will love*
+============================================================
 
 .. image:: https://img.shields.io/pypi/v/senaite.core.supermodel.svg?style=flat-square
    :target: https://pypi.python.org/pypi/senaite.core.supermodel
@@ -23,6 +23,7 @@
 
 .. image:: https://img.shields.io/badge/Made%20for%20SENAITE-%E2%AC%A1-lightgrey.svg
    :target: https://www.senaite.com
+
 
 About
 =====
@@ -56,5 +57,13 @@ well to all the metadata columns of the primary catalog of this object::
 
 Please read the `full functional doctest`_ to see the super powers of the
 `SuperModel` in action.
+
+
+Installation
+============
+
+SENAITE.CORE.SUPERMODEL is a dependency of SENAITE.CORE and therefore no
+additional installation steps are required.
+
 
 .. _full functional doctest: https://github.com/senaite/senaite.core.supermodel/blob/master/src/senaite/core/supermodel/docs/SUPERMODEL.rst
