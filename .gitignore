@@ -4,8 +4,8 @@ bin
 parts
 var
 develop-eggs
-src/senaite.api
-src/senaite.core
+eggs
+src/senaite.*
 dist
 build
 *.pyc
