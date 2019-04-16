@@ -1,7 +1,7 @@
-1.3.0 (unreleased)
+1.2.1 (unreleased)
 ------------------
 
-- no changes yet
+- #4 Skip private fields starting with `_`
 
 
 1.2.0 (2019-03-30)
