@@ -126,7 +126,8 @@ class SuperModel(object):
             yield k
 
     def keys(self):
-        return self.instance.Schema().keys()
+        fields = self.instance.Schema().keys()
+        return filter(lambda f: not f.startswith("_"), fields)
 
     def iteritems(self):
         for k in self:
