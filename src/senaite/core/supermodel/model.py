@@ -294,7 +294,7 @@ class SuperModel(object):
         """Wraps an object into a Super Model
         """
         if api.is_uid(thing):
-            return self.get_brain_by_uid(thing)
+            return thing
         if not api.is_object(thing):
             raise TypeError("Expected a portal object, got '{}'"
                             .format(type(thing)))
