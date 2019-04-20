@@ -281,7 +281,7 @@ class SuperModel(object):
             self._catalog = self.get_catalog_for(brain)
 
         # Fetch the brain with the primary catalog
-        results = self.catalog({"UID": self.uid})
+        results = self.catalog({"UID": uid})
         if not results:
             raise ValueError("No results found for UID '{}'".format(uid))
         if len(results) != 1:
