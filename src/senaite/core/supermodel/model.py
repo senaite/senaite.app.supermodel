@@ -281,7 +281,7 @@ class SuperModel(object):
             self._catalog = self.get_catalog_for(brain)
 
         # Fetch the brain with the primary catalog
-        results = self.catalog({"UID": self.uid})
+        results = self.catalog({"UID": uid})
         if not results:
             raise ValueError("No results found for UID '{}'".format(uid))
         if len(results) != 1:
@@ -294,7 +294,7 @@ class SuperModel(object):
         """Wraps an object into a Super Model
         """
         if api.is_uid(thing):
-            return self.get_brain_by_uid(thing)
+            return SuperModel(thing)
         if not api.is_object(thing):
             raise TypeError("Expected a portal object, got '{}'"
                             .format(type(thing)))
