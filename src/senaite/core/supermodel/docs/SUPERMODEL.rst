@@ -26,7 +26,7 @@ Now we can simply create a new `SuperModel` instance by passing in the Unique ID
 
 So let's create a client for that::
 
-    >>> from senaite import api
+    >>> from bika.lims import api
     >>> portal = api.get_portal()
 
     >>> client = api.create(portal.clients, "Client", title="Happy Hills", ClientID="HH")

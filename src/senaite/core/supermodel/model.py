@@ -20,12 +20,12 @@
 
 import json
 
+from bika.lims import api
 from DateTime import DateTime
 from Products.CMFPlone.utils import safe_callable
 from Products.CMFPlone.utils import safe_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.ZCatalog.Lazy import LazyMap
-from senaite import api
 from senaite.core.supermodel import logger
 from senaite.core.supermodel.decorators import returns_super_model
 from senaite.core.supermodel.interfaces import ISuperModel
