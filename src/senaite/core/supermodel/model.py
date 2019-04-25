@@ -31,6 +31,8 @@ from senaite.core.supermodel.decorators import returns_super_model
 from senaite.core.supermodel.interfaces import ISuperModel
 from zope.interface import implements
 
+_marker = object()
+
 
 class SuperModel(object):
     """Generic wrapper for content objects
@@ -52,7 +54,6 @@ class SuperModel(object):
     def __init__(self, thing):
 
         self.data = dict()
-        self.__empty_marker = object
 
         if api.is_uid(thing):
             return self.init_with_uid(thing)
@@ -104,14 +105,14 @@ class SuperModel(object):
         return self.uid == other.uid
 
     def __getitem__(self, key):
-        value = self.get(key, self.__empty_marker)
-        if value is not self.__empty_marker:
+        value = self.get(key, _marker)
+        if value is not _marker:
             return value
         raise KeyError(key)
 
     def __getattr__(self, name):
-        value = self.get(name, self.__empty_marker)
-        if value is not self.__empty_marker:
+        value = self.get(name, _marker)
+        if value is not _marker:
             return value
         # tab completion in pdbpp
         if name == "__members__":
@@ -150,10 +151,10 @@ class SuperModel(object):
 
     def get(self, name, default=None):
         # Internal lookup in the data dict
-        value = self.data.get(name, self.__empty_marker)
+        value = self.data.get(name, _marker)
 
         # Return the value immediately
-        if value is not self.__empty_marker:
+        if value is not _marker:
             return self.data[name]
 
         # Field lookup on the instance
@@ -165,14 +166,14 @@ class SuperModel(object):
             if not name.startswith("_") or not name.startswith("__"):
                 # check if the instance contains this attribute
                 instance = self.instance
-                instance_value = getattr(instance, name, self.__empty_marker)
-                if instance_value is not self.__empty_marker:
+                instance_value = getattr(instance, name, _marker)
+                if instance_value is not _marker:
                     return instance_value
 
                 # check if the brain contains this attribute
                 brain = self.brain
-                brain_value = getattr(brain, name, self.__empty_marker)
-                if brain_value is not self.__empty_marker:
+                brain_value = getattr(brain, name, _marker)
+                if brain_value is not _marker:
                     return brain_value
 
             return default
@@ -182,8 +183,8 @@ class SuperModel(object):
             accessor_name = accessor.__name__
 
             # Metadata lookup by accessor name
-            value = getattr(self.brain, accessor_name, self.__empty_marker)
-            if value is self.__empty_marker:
+            value = getattr(self.brain, accessor_name, _marker)
+            if value is _marker:
                 logger.debug("Add metadata column '{}' to the catalog '{}' "
                              "to increase performance!"
                              .format(accessor_name, self.catalog.__name__))
