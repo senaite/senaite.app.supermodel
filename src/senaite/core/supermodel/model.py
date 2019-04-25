@@ -91,6 +91,17 @@ class SuperModel(object):
         self._catalog = self.get_catalog_for(instance)
         self._instance = instance
 
+    def __del__(self):
+        """Destructor
+
+        Terminates all references for garbage collection
+        """
+        self._brain = None
+        self._catalog = None
+        self._instance = None
+        self._uid = None
+        self.data = None
+
     def __repr__(self):
         return "<{}:UID({})>".format(
             self.__class__.__name__, self.uid)
