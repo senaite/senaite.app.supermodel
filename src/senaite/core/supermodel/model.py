@@ -99,6 +99,7 @@ class SuperModel(object):
 
         Terminates all references for garbage collection
         """
+        logger.debug("Destroying {}".format(repr(self)))
 
         # Re-ghostify the instance
         # https://zodb.readthedocs.io/en/latest/api.html#persistent.interfaces.IPersistent
