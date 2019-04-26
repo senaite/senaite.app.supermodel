@@ -99,6 +99,13 @@ class SuperModel(object):
 
         Terminates all references for garbage collection
         """
+
+        # Re-ghostify the instance
+        # https://zodb.readthedocs.io/en/latest/api.html#persistent.interfaces.IPersistent
+        if self._instance is not None:
+            if not getattr(self.instance, "_p_changed", 0):
+                self._instance._p_deactivate()
+
         self._brain = None
         self._catalog = None
         self._instance = None
