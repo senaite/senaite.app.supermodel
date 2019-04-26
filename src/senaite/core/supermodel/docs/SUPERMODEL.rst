@@ -193,6 +193,42 @@ The `get` method allows to retrieve a named value:
 
 
 
+Lazy Loading
+------------
+
+The `SuperModel` retrieves the brain/object only if it is requested:
+
+    >>> supermodel = SuperModel(sample.UID())
+
+Accessing the `brain` property fetches the brain from the right catalog:
+
+    >>> supermodel._brain is None
+    True
+
+    >>> supermodel.brain
+    <Products.ZCatalog.Catalog.mybrains object at ...>
+
+    >>> supermodel._brain is supermodel.brain
+    True
+
+The catalog is automatically set to the primary registered catalog of the ArchetypeTool:
+
+    >>> supermodel.catalog
+    <BikaCatalogAnalysisRequestListing at /plone/bika_catalog_analysisrequest_listing>
+
+The instance is not fetched yet:
+
+    >>> supermodel._instance is None
+    True
+
+But as soon as we access the instance property, it will be waked up:
+
+    >>> supermodel.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+    >>> supermodel._instance is supermodel.instance
+    True
+
 
 Not impressed yet?
 ------------------
