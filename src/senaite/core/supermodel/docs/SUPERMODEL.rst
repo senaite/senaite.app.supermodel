@@ -93,14 +93,12 @@ Create some Analysis Services with unique Keywords:
     >>> Cu = api.create(analysisservices, "AnalysisService", title="Copper", Keyword="Cu")
     >>> Fe = api.create(analysisservices, "AnalysisService", title="Iron", Keyword="Fe")
     >>> Au = api.create(analysisservices, "AnalysisService", title="Aurum", Keyword="Au")
-    >>> Test1 = api.create(analysisservices, "AnalysisService", title="Calculated Test Service 1", Keyword="Test1")
-    >>> Test2 = api.create(analysisservices, "AnalysisService", title="Calculated Test Service 2", Keyword="Test2")
 
 Create a new Sample:
 
     >>> sample = new_sample([Cu, Fe, Au])
 
-Get the contained `Cu` Analysis:
+Get the contained Analyses:
 
     >>> cu = get_analysis(sample, Cu.getKeyword())
     >>> fe = get_analysis(sample, Fe.getKeyword())
@@ -143,7 +141,6 @@ All of them should be equal::
     >>> supermodel1 == supermodel2 == supermodel3
     True
 
-
 We have now full access to the `Client` schema::
 
     >>> supermodel1.Name
@@ -170,6 +167,31 @@ It is also possible to call member functions directly::
 
     >>> supermodel1.getPhysicalPath()
     ('', 'plone', 'clients', 'client-1')
+
+
+SuperModel Interface
+--------------------
+
+A `SuperModel` provides more or less the same interface as a standard Python dictionary.
+
+    >>> supermodel = SuperModel(sample)
+
+The `keys` method returns all schema fields of the model:
+
+    >>> supermodel.keys()
+    ['id', 'title', ...]
+
+The `values` method returns the values of the fields:
+
+    >>> supermodel.values()
+    ['Water-0001', 'Water-0001', ...]
+
+The `get` method allows to retrieve a named value:
+
+    >>> supermodel.get("title")
+    'Water-0001'
+
+
 
 
 Not impressed yet?

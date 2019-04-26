@@ -53,19 +53,22 @@ class SuperModel(object):
 
     def __init__(self, thing):
 
-        self.data = dict()
-
-        if api.is_uid(thing):
-            return self.init_with_uid(thing)
-        if api.is_brain(thing):
-            return self.init_with_brain(thing)
-        if api.is_object(thing):
-            return self.init_with_instance(thing)
+        # Type based initializers
         if thing == "0":
-            return self.init_with_instance(api.get_portal())
+            self.init_with_instance(api.get_portal())
+        elif api.is_uid(thing):
+            self.init_with_uid(thing)
+        elif api.is_brain(thing):
+            self.init_with_brain(thing)
+        elif api.is_object(thing):
+            self.init_with_instance(thing)
+        else:
+            raise TypeError(
+                "Can not initialize a SuperModel with '{}'".format(
+                    repr(thing)))
 
-        raise TypeError(
-            "Can not initialize a SuperModel with '{}'".format(repr(thing)))
+        # Internal data
+        self.data = dict()
 
     def init_with_uid(self, uid):
         """Initialize with an UID
@@ -189,7 +192,7 @@ class SuperModel(object):
 
             return default
         else:
-            # Retrieve field value by accessor
+            # Retrieve field value by accessor name
             accessor = field.getAccessor(self.instance)
             accessor_name = accessor.__name__
 
@@ -275,6 +278,7 @@ class SuperModel(object):
         if not api.is_object(brain_or_object):
             raise TypeError("Invalid object type %r" % brain_or_object)
         catalogs = api.get_catalogs_for(brain_or_object, default="uid_catalog")
+
         return catalogs[0]
 
     def get_brain_by_uid(self, uid):
