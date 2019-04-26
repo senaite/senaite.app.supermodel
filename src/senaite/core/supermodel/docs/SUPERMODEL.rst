@@ -23,6 +23,7 @@ Test Setup
 
 Needed Imports:
 
+    >>> import transaction
     >>> from DateTime import DateTime
     >>> from bika.lims import api
     >>> from bika.lims.utils.analysisrequest import create_analysisrequest
@@ -39,14 +40,16 @@ Functional Helpers:
     ...     ip, port = startZServer()
     ...     return "http://{}:{}/{}".format(ip, port, portal.id)
 
-		>>> def new_sample(services):
-		...     values = {
-		...         "Client": client.UID(),
-		...         "Contact": contact.UID(),
-		...         "DateSampled": date_now,
-		...         "SampleType": sampletype.UID()}
-		...     service_uids = map(api.get_uid, services)
-		...     return create_analysisrequest(client, request, values, service_uids)
+    >>> def new_sample(services):
+    ...     values = {
+    ...         "Client": client.UID(),
+    ...         "Contact": contact.UID(),
+    ...         "DateSampled": date_now,
+    ...         "SampleType": sampletype.UID()}
+    ...     service_uids = map(api.get_uid, services)
+    ...     sample = create_analysisrequest(client, request, values, service_uids)
+    ...     transaction.commit()
+    ...     return sample
 
     >>> def get_analysis(sample, id):
     ...     ans = sample.getAnalyses(getId=id, full_objects=True)
@@ -227,6 +230,38 @@ But as soon as we access the instance property, it will be waked up:
     <AnalysisRequest at /plone/clients/client-1/Water-0001>
 
     >>> supermodel._instance is supermodel.instance
+    True
+
+
+Cleanup
+-------
+
+Each `SuperModel` cleans up after itself:
+
+    >>> supermodel1 = SuperModel(sample)
+    >>> supermodel2 = SuperModel(sample)
+
+    >>> supermodel1.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+    >>> supermodel2.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+Deleting the `SuperModel` will trigger the destrucotr:
+
+    >>> del supermodel1
+
+The wrapped instance object gets ghosted if it was not modified:_
+
+    >>> sample._p_state == -1
+    True
+
+And reactivated (loaded into memory) if it is accessed again:
+
+    >>> supermodel2.get("title")
+    'Water-0001'
+
+    >>> sample._p_state == 0
     True
 
 
