@@ -289,14 +289,9 @@ class SuperModel(object):
 
         # ensure we have the primary catalog
         if self._catalog is None:
-            brain = self._brain
-            if brain is None:
-                # Query first the UID catalog
-                uid_catalog = api.get_tool("uid_catalog")
-                results = uid_catalog({"UID": uid})
-                if len(results) != 1:
-                    raise ValueError("No object found for UID '{}'".format(uid))
-                brain = results[0]
+            brain = api.get_brain_by_uid(uid, default=_marker)
+            if brain is _marker:
+                raise ValueError("No object found for UID '{}'".format(uid))
             # Retrieve the first registered catalog for the brain
             self._catalog = self.get_catalog_for(brain)
 
