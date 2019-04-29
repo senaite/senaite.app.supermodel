@@ -67,12 +67,10 @@ class SuperModel(object):
                 "Can not initialize a SuperModel with '{}'".format(
                     repr(thing)))
 
-        # Internal data
-        self.data = dict()
-
     def init_with_uid(self, uid):
         """Initialize with an UID
         """
+        self._data = {}
         self._uid = uid
         self._brain = None
         self._catalog = None
@@ -81,6 +79,7 @@ class SuperModel(object):
     def init_with_brain(self, brain):
         """Initialize with a catalog brain
         """
+        self._data = {}
         self._uid = api.get_uid(brain)
         self._brain = brain
         self._catalog = self.get_catalog_for(brain)
@@ -89,6 +88,7 @@ class SuperModel(object):
     def init_with_instance(self, instance):
         """Initialize with an instance object
         """
+        self._data = {}
         self._uid = api.get_uid(instance)
         self._brain = None
         self._catalog = self.get_catalog_for(instance)
@@ -113,7 +113,7 @@ class SuperModel(object):
         self._catalog = None
         self._instance = None
         self._uid = None
-        self.data = None
+        self._data = None
 
     def __repr__(self):
         return "<{}:UID({})>".format(
@@ -218,7 +218,7 @@ class SuperModel(object):
         value = self.process_value(value)
 
         # Store value in the internal data dict
-        self.data[name] = value
+        self._data[name] = value
 
         return value
 
@@ -254,6 +254,14 @@ class SuperModel(object):
         """UID of the wrapped object
         """
         return self._uid
+
+    @property
+    def data(self):
+        """Internal data cache
+        """
+        if not isinstance(self._data, dict):
+            self._data = {}
+        return self._data
 
     @property
     def instance(self):
@@ -383,3 +391,8 @@ class SuperModel(object):
         """Returns a JSON representation of the current object
         """
         return json.dumps(self.to_dict())
+
+    def flush(self):
+        """Flush the internal data cache
+        """
+        self._data = {}

@@ -195,7 +195,6 @@ The `get` method allows to retrieve a named value:
     'Water-0001'
 
 
-
 Lazy Loading
 ------------
 
@@ -238,7 +237,7 @@ Cleanup
 
 Each `SuperModel` cleans up after itself.
 
-To test this, we create some `SuperModel` instances with the same object:
+To test this, we create some `SuperModel` instances for the same object:
 
     >>> supermodel1 = SuperModel(sample)
     >>> supermodel2 = SuperModel(sample)
@@ -250,7 +249,7 @@ To test this, we create some `SuperModel` instances with the same object:
     >>> supermodel2.instance
     <AnalysisRequest at /plone/clients/client-1/Water-0001>
 
-    >>> supermodel2.instance
+    >>> supermodel3.instance
     <AnalysisRequest at /plone/clients/client-1/Water-0001>
 
 Deleting *supermodel1* will trigger the `__del__` destructor:
@@ -384,3 +383,34 @@ A `SuperModel` can also return all content fields as a dictionary::
 
     >>> data.get("Priority")
     '3'
+
+
+Internal Caching
+----------------
+
+Each `SuperModel` caches a once retrieved field value in an internal lookup cache:
+
+    >>> supermodel = SuperModel(sample)
+
+Let's change the value of the wrapped object:
+
+    >>> sample.setCCEmails("mr.magoo@senaite.com")
+
+Retrieving the value for the first time stores it internally:
+
+    >>> supermodel.CCEmails
+    'mr.magoo@senaite.com'
+
+Let's change now the value:
+
+    >>> sample.setCCEmails("hong.kong.phooey@senaite.com")
+
+    >>> supermodel.CCEmails
+    'mr.magoo@senaite.com'
+
+Only flushing the cache will lookup the new value:
+
+    >>> supermodel.flush()
+
+    >>> supermodel.CCEmails
+    'hong.kong.phooey@senaite.com'
