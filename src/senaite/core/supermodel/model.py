@@ -70,29 +70,29 @@ class SuperModel(object):
     def init_with_uid(self, uid):
         """Initialize with an UID
         """
-        self._data = {}
-        self._uid = uid
         self._brain = None
         self._catalog = None
+        self._data = {}
         self._instance = None
+        self._uid = uid
 
     def init_with_brain(self, brain):
         """Initialize with a catalog brain
         """
-        self._data = {}
-        self._uid = api.get_uid(brain)
         self._brain = brain
         self._catalog = self.get_catalog_for(brain)
+        self._data = {}
         self._instance = None
+        self._uid = api.get_uid(brain)
 
     def init_with_instance(self, instance):
         """Initialize with an instance object
         """
-        self._data = {}
-        self._uid = api.get_uid(instance)
         self._brain = None
         self._catalog = self.get_catalog_for(instance)
+        self._data = {}
         self._instance = instance
+        self._uid = api.get_uid(instance)
 
     def __del__(self):
         """Destructor
@@ -111,9 +111,9 @@ class SuperModel(object):
 
         self._brain = None
         self._catalog = None
+        self._data = None
         self._instance = None
         self._uid = None
-        self._data = None
 
     def __repr__(self):
         return "<{}:UID({})>".format(
