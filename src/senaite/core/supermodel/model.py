@@ -101,10 +101,12 @@ class SuperModel(object):
         """
         logger.debug("Destroying {}".format(repr(self)))
 
-        # Re-ghostify the instance
         # https://zodb.readthedocs.io/en/latest/api.html#persistent.interfaces.IPersistent
         if self._instance is not None:
-            if not getattr(self._instance, "_p_changed", 0):
+            changed = getattr(self._instance, "_p_changed", 0)
+            # Object is either in the "Ghost" or in the "Saved" state and can
+            # be safely deactivated
+            if not changed:
                 self._instance._p_deactivate()
 
         self._brain = None
