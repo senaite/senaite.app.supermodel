@@ -236,10 +236,13 @@ But as soon as we access the instance property, it will be waked up:
 Cleanup
 -------
 
-Each `SuperModel` cleans up after itself:
+Each `SuperModel` cleans up after itself.
+
+To test this, we create some `SuperModel` instances with the same object:
 
     >>> supermodel1 = SuperModel(sample)
     >>> supermodel2 = SuperModel(sample)
+    >>> supermodel3 = SuperModel(sample)
 
     >>> supermodel1.instance
     <AnalysisRequest at /plone/clients/client-1/Water-0001>
@@ -247,22 +250,96 @@ Each `SuperModel` cleans up after itself:
     >>> supermodel2.instance
     <AnalysisRequest at /plone/clients/client-1/Water-0001>
 
-Deleting the `SuperModel` will trigger the destrucotr:
+    >>> supermodel2.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+Deleting *supermodel1* will trigger the `__del__` destructor:
 
     >>> del supermodel1
 
-The wrapped instance object gets ghosted if it was not modified:_
+The wrapped instance object gets "ghosted" if it was not modified:
 
-    >>> sample._p_state == -1
+    >>> sample._p_changed is None
     True
 
-And reactivated (loaded into memory) if it is accessed again:
+    >>> sample._p_state
+    -1
+
+And reactivated (loaded into memory) if it is accessed again by the otehr supermodel:
 
     >>> supermodel2.get("title")
     'Water-0001'
 
-    >>> sample._p_state == 0
+    >>> sample._p_state
+    0
+
+Now we change an attribute of the sample instance:
+
+    >>> sample.setCCEmails("mr.magoo@senaite.com")
+
+    >>> sample._p_changed
     True
+
+    >>> sample._p_state
+    1
+
+    >>> sample._p_jar
+    <Connection at ...>
+
+Our remaining *supermodel2* should have this value now set:
+
+    >>> supermodel2.CCEmails
+    'mr.magoo@senaite.com'
+
+Now let's also delete *supermodel2*:
+
+    >>> del supermodel2
+
+The instance should still be in the same state:
+
+    >>> sample._p_state
+    1
+
+And retain its value:
+
+    >>> sample.getCCEmails()
+    'mr.magoo@senaite.com'
+
+Because calling `_p_deactivate()` has no effect on changed objects:
+
+    >>> sample._p_deactivate()
+
+    >>> sample._p_state
+    1
+
+    >>> sample.getCCEmails()
+    'mr.magoo@senaite.com'
+
+Only calling `_p_invalidate()` would flush the object:
+
+    >>> sample._p_invalidate()
+
+    >>> sample._p_changed is None
+    True
+
+    >>> sample._p_state
+    -1
+
+    >>> sample.getCCEmails()
+    ''
+
+Our remaining *supermodel3* should reflect this:
+
+    >>> supermodel3.CCEmails
+    ''
+
+    >>> sample._p_state
+    0
+
+    >>> del supermodel3
+
+    >>> sample._p_state
+    -1
 
 
 Not impressed yet?
