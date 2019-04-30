@@ -1,6 +1,7 @@
 1.2.1 (unreleased)
 ------------------
 
+- #6 Added Destructor and further improvements
 - #5 Fix UID->SuperModel conversion of UIDReferenceFields
 - #4 Skip private fields starting with `_`
 

@@ -40,7 +40,6 @@ setup(
     zip_safe=False,
     install_requires=[
         "setuptools",
-        "senaite.api",
         "senaite.core",
     ],
     extras_require={

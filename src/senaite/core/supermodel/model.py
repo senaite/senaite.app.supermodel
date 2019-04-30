@@ -20,16 +20,18 @@
 
 import json
 
+from bika.lims import api
 from DateTime import DateTime
 from Products.CMFPlone.utils import safe_callable
 from Products.CMFPlone.utils import safe_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.ZCatalog.Lazy import LazyMap
-from senaite import api
 from senaite.core.supermodel import logger
 from senaite.core.supermodel.decorators import returns_super_model
 from senaite.core.supermodel.interfaces import ISuperModel
 from zope.interface import implements
+
+_marker = object()
 
 
 class SuperModel(object):
@@ -51,44 +53,67 @@ class SuperModel(object):
 
     def __init__(self, thing):
 
-        self.data = dict()
-        self.__empty_marker = object
-
-        if api.is_uid(thing):
-            return self.init_with_uid(thing)
-        if api.is_brain(thing):
-            return self.init_with_brain(thing)
-        if api.is_object(thing):
-            return self.init_with_instance(thing)
+        # Type based initializers
         if thing == "0":
-            return self.init_with_instance(api.get_portal())
-
-        raise TypeError(
-            "Can not initialize a SuperModel with '{}'".format(repr(thing)))
+            self.init_with_instance(api.get_portal())
+        elif api.is_uid(thing):
+            self.init_with_uid(thing)
+        elif api.is_brain(thing):
+            self.init_with_brain(thing)
+        elif api.is_object(thing):
+            self.init_with_instance(thing)
+        else:
+            raise TypeError(
+                "Can not initialize a SuperModel with '{}'".format(
+                    repr(thing)))
 
     def init_with_uid(self, uid):
         """Initialize with an UID
         """
-        self._uid = uid
         self._brain = None
         self._catalog = None
+        self._data = {}
         self._instance = None
+        self._uid = uid
 
     def init_with_brain(self, brain):
         """Initialize with a catalog brain
         """
-        self._uid = api.get_uid(brain)
         self._brain = brain
         self._catalog = self.get_catalog_for(brain)
+        self._data = {}
         self._instance = None
+        self._uid = api.get_uid(brain)
 
     def init_with_instance(self, instance):
         """Initialize with an instance object
         """
-        self._uid = api.get_uid(instance)
         self._brain = None
         self._catalog = self.get_catalog_for(instance)
+        self._data = {}
         self._instance = instance
+        self._uid = api.get_uid(instance)
+
+    def __del__(self):
+        """Destructor
+
+        Terminates all references for garbage collection
+        """
+        logger.debug("Destroying {}".format(repr(self)))
+
+        # https://zodb.readthedocs.io/en/latest/api.html#persistent.interfaces.IPersistent
+        if self._instance is not None:
+            changed = getattr(self._instance, "_p_changed", 0)
+            # Object is either in the "Ghost" or in the "Saved" state and can
+            # be safely deactivated
+            if not changed:
+                self._instance._p_deactivate()
+
+        self._brain = None
+        self._catalog = None
+        self._data = None
+        self._instance = None
+        self._uid = None
 
     def __repr__(self):
         return "<{}:UID({})>".format(
@@ -104,14 +129,14 @@ class SuperModel(object):
         return self.uid == other.uid
 
     def __getitem__(self, key):
-        value = self.get(key, self.__empty_marker)
-        if value is not self.__empty_marker:
+        value = self.get(key, _marker)
+        if value is not _marker:
             return value
         raise KeyError(key)
 
     def __getattr__(self, name):
-        value = self.get(name, self.__empty_marker)
-        if value is not self.__empty_marker:
+        value = self.get(name, _marker)
+        if value is not _marker:
             return value
         # tab completion in pdbpp
         if name == "__members__":
@@ -150,10 +175,10 @@ class SuperModel(object):
 
     def get(self, name, default=None):
         # Internal lookup in the data dict
-        value = self.data.get(name, self.__empty_marker)
+        value = self.data.get(name, _marker)
 
         # Return the value immediately
-        if value is not self.__empty_marker:
+        if value is not _marker:
             return self.data[name]
 
         # Field lookup on the instance
@@ -165,25 +190,25 @@ class SuperModel(object):
             if not name.startswith("_") or not name.startswith("__"):
                 # check if the instance contains this attribute
                 instance = self.instance
-                instance_value = getattr(instance, name, self.__empty_marker)
-                if instance_value is not self.__empty_marker:
+                instance_value = getattr(instance, name, _marker)
+                if instance_value is not _marker:
                     return instance_value
 
                 # check if the brain contains this attribute
                 brain = self.brain
-                brain_value = getattr(brain, name, self.__empty_marker)
-                if brain_value is not self.__empty_marker:
+                brain_value = getattr(brain, name, _marker)
+                if brain_value is not _marker:
                     return brain_value
 
             return default
         else:
-            # Retrieve field value by accessor
+            # Retrieve field value by accessor name
             accessor = field.getAccessor(self.instance)
             accessor_name = accessor.__name__
 
             # Metadata lookup by accessor name
-            value = getattr(self.brain, accessor_name, self.__empty_marker)
-            if value is self.__empty_marker:
+            value = getattr(self.brain, accessor_name, _marker)
+            if value is _marker:
                 logger.debug("Add metadata column '{}' to the catalog '{}' "
                              "to increase performance!"
                              .format(accessor_name, self.catalog.__name__))
@@ -193,7 +218,7 @@ class SuperModel(object):
         value = self.process_value(value)
 
         # Store value in the internal data dict
-        self.data[name] = value
+        self._data[name] = value
 
         return value
 
@@ -231,6 +256,14 @@ class SuperModel(object):
         return self._uid
 
     @property
+    def data(self):
+        """Internal data cache
+        """
+        if not isinstance(self._data, dict):
+            self._data = {}
+        return self._data
+
+    @property
     def instance(self):
         """Content instance of the wrapped object
         """
@@ -263,6 +296,7 @@ class SuperModel(object):
         if not api.is_object(brain_or_object):
             raise TypeError("Invalid object type %r" % brain_or_object)
         catalogs = api.get_catalogs_for(brain_or_object, default="uid_catalog")
+
         return catalogs[0]
 
     def get_brain_by_uid(self, uid):
@@ -273,11 +307,10 @@ class SuperModel(object):
 
         # ensure we have the primary catalog
         if self._catalog is None:
-            uid_catalog = api.get_tool("uid_catalog")
-            results = uid_catalog({"UID": uid})
-            if len(results) != 1:
+            brain = api.get_brain_by_uid(uid, default=_marker)
+            if brain is _marker:
                 raise ValueError("No object found for UID '{}'".format(uid))
-            brain = results[0]
+            # Retrieve the first registered catalog for the brain
             self._catalog = self.get_catalog_for(brain)
 
         # Fetch the brain with the primary catalog
@@ -358,3 +391,8 @@ class SuperModel(object):
         """Returns a JSON representation of the current object
         """
         return json.dumps(self.to_dict())
+
+    def flush(self):
+        """Flush the internal data cache
+        """
+        self._data = {}
