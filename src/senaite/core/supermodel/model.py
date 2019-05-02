@@ -54,7 +54,7 @@ class SuperModel(object):
     def __init__(self, thing):
 
         # Type based initializers
-        if thing == "0":
+        if isinstance(thing, basestring) and thing == "0":
             self.init_with_instance(api.get_portal())
         elif api.is_uid(thing):
             self.init_with_uid(thing)
