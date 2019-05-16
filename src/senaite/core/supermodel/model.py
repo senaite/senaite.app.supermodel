@@ -227,6 +227,10 @@ class SuperModel(object):
         """
         # UID -> SuperModel
         if api.is_uid(value):
+            # Do not process "0" as the portal object
+            # -> Side effect in specifications when the value is "0"
+            if value == "0":
+                return "0"
             return self.to_super_model(value)
         # Content -> SuperModel
         elif api.is_object(value):
