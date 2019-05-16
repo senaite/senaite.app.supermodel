@@ -1,6 +1,7 @@
 1.2.1 (unreleased)
 ------------------
 
+- #8 Do not process "0" values to Portal-SuperModels
 - #7 Fix traceback when initializing a supermodel with a catalog brain
 - #6 Added Destructor and further improvements
 - #5 Fix UID->SuperModel conversion of UIDReferenceFields
