@@ -1,4 +1,4 @@
-1.2.1 (unreleased)
+1.2.1 (2019-07-01)
 ------------------
 
 - #8 Do not process "0" values to Portal-SuperModels
