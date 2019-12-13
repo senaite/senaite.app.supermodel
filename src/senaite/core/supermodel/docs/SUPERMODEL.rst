@@ -181,13 +181,13 @@ A `SuperModel` provides more or less the same interface as a standard Python dic
 
 The `keys` method returns all schema fields of the model:
 
-    >>> supermodel.keys()
-    ['id', 'title', ...]
+    >>> set(supermodel.keys()).issuperset(["SampleType", "Sampler"])
+    True
 
 The `values` method returns the values of the fields:
 
-    >>> supermodel.values()
-    ['Water-0001', 'Water-0001', ...]
+    >>> set(supermodel.values()).issuperset(["Water-0001", "Water"]
+    True
 
 The `get` method allows to retrieve a named value:
 
@@ -378,8 +378,8 @@ A `SuperModel` can also return all content fields as a dictionary::
 
     >>> data = supermodel.to_dict()
 
-    >>> data.get("ClientTitle")
-    'Happy Hills'
+    >>> data.get("SampleTypeTitle")
+    'Water'
 
     >>> data.get("Priority")
     '3'
