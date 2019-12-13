@@ -186,8 +186,8 @@ The `keys` method returns all schema fields of the model:
 
 The `values` method returns the values of the fields:
 
-    >>> set(supermodel.values()).issuperset(["Water-0001", "Water"])
-    True
+    >>> supermodel.values()
+    [...]
 
 The `get` method allows to retrieve a named value:
 
