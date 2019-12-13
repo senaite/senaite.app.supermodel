@@ -1,7 +1,8 @@
 1.2.2 (unreleased)
 ------------------
 
-- no changes yet
+- #9 Support Dexterity Fields
+
 
 1.2.1 (2019-07-01)
 ------------------
