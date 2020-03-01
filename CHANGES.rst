@@ -1,4 +1,4 @@
-1.2.2 (unreleased)
+1.2.2 (2020-03-01)
 ------------------
 
 - #9 Support Dexterity Fields
