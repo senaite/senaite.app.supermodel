@@ -15,10 +15,10 @@
 # this program; if not, write to the Free Software Foundation, Inc., 51
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Copyright 2018-2019 by it's authors.
+# Copyright 2018-2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
-from senaite import api
+from bika.lims import api
 from senaite.core.supermodel.interfaces import ISuperModel
 from zope.component import queryAdapter
 
