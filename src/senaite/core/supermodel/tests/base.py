@@ -18,43 +18,66 @@
 # Copyright 2018-2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
+import sys
+
+import transaction
 import unittest2 as unittest
-
-from plone.testing import z2
-
-from plone.app.testing import setRoles
-from plone.app.testing import applyProfile
-from plone.app.testing import TEST_USER_ID
 from plone.app.testing import PLONE_FIXTURE
-from plone.app.testing import PloneSandboxLayer
+from plone.app.testing import TEST_USER_ID
 from plone.app.testing import FunctionalTesting
-
-from bika.lims.testing import BASE_TESTING
+from plone.app.testing import PloneSandboxLayer
+from plone.app.testing import applyProfile
+from plone.app.testing import setRoles
+from plone.testing import zope
 
 
 class SimpleTestLayer(PloneSandboxLayer):
     """Setup Plone with installed AddOn only
     """
-    defaultBases = (BASE_TESTING, PLONE_FIXTURE,)
+    defaultBases = (PLONE_FIXTURE,)
 
     def setUpZope(self, app, configurationContext):
         super(SimpleTestLayer, self).setUpZope(app, configurationContext)
 
-        # Load ZCML
+        import Products.TextIndexNG3
         import bika.lims
-        import senaite.core.supermodel
+        import senaite.core
+        import senaite.core.listing
+        import senaite.impress
+        import senaite.core.spotlight
 
+        # XXX HACK
+        # The `senaite.core` module refers to the `senaite.core.supermodel`
+        # middle namespace package because of the `sys.path` order of the
+        # `bin/test` script:
+        #
+        # <module 'senaite.core' from 'senaite.core.listing/src/senaite/core/__init__.pyc'>   # noqa
+        #
+        # Maybe we should move all senaite.core.* packages into a new namespace
+        # which is unused, e.g. `senaite.app.*`?
+        senaite.core.__path__ = filter(
+            lambda p: p.endswith("senaite.core/src"), sys.path)
+
+        # Load ZCML
+        self.loadZCML(package=Products.TextIndexNG3)
         self.loadZCML(package=bika.lims)
-        self.loadZCML(package=senaite.core.supermodel)
+        self.loadZCML(package=senaite.core)
+        self.loadZCML(package=senaite.core.listing)
+        self.loadZCML(package=senaite.impress)
+        self.loadZCML(package=senaite.core.spotlight)
 
         # Install product and call its initialize() function
-        z2.installProduct(app, "senaite.core.supermodel")
+        zope.installProduct(app, "Products.TextIndexNG3")
+        zope.installProduct(app, "bika.lims")
+        zope.installProduct(app, "senaite.core")
+        zope.installProduct(app, "senaite.core.listing")
+        zope.installProduct(app, "senaite.impress")
+        zope.installProduct(app, "senaite.core.spotlight")
 
     def setUpPloneSite(self, portal):
         super(SimpleTestLayer, self).setUpPloneSite(portal)
-
-        # Apply Setup Profile (portal_quickinstaller)
-        applyProfile(portal, 'bika.lims:default')
+        applyProfile(portal, "senaite.core:default")
+        transaction.commit()
 
 
 ###
