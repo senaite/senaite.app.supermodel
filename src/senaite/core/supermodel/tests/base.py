@@ -18,8 +18,6 @@
 # Copyright 2018-2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
-import sys
-
 import transaction
 import unittest2 as unittest
 from plone.app.testing import PLONE_FIXTURE
@@ -56,7 +54,8 @@ class SimpleTestLayer(PloneSandboxLayer):
         # Maybe we should move all senaite.core.* packages into a new namespace
         # which is unused, e.g. `senaite.app.*`?
         senaite.core.__path__ = filter(
-            lambda p: p.endswith("senaite.core/src"), sys.path)
+            lambda p: p.endswith("senaite.core/src/senaite/core"),
+            senaite.core.__path__)
 
         # Load ZCML
         self.loadZCML(package=Products.TextIndexNG3)
