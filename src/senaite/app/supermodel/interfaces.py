@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of SENAITE.CORE.SUPERMODEL.
+# This file is part of SENAITE.APP.SUPERMODEL.
 #
-# SENAITE.CORE.SUPERMODEL is free software: you can redistribute it and/or
+# SENAITE.APP.SUPERMODEL is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 2.
 #
@@ -18,20 +18,9 @@
 # Copyright 2018-2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
-import logging
-
-from zope.i18nmessageid import MessageFactory
-
-# Defining a Message Factory for when this product is internationalized.
-senaiteMessageFactory = MessageFactory('senaite.core.supermodel')
-
-logger = logging.getLogger("senaite.core.supermodel")
+from zope.interface import Interface
 
 
-# convenience import (leave below the logger import above)
-from senaite.core.supermodel.model import SuperModel  # noqa
-
-
-def initialize(context):
-    """Initializer called when used as a Zope 2 product."""
-    logger.info("*** Initializing SENAITE.CORE.SUPERMODEL ***")
+class ISuperModel(Interface):
+    """Super model wrapper
+    """

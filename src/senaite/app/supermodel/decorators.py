@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of SENAITE.CORE.SUPERMODEL.
+# This file is part of SENAITE.APP.SUPERMODEL.
 #
-# SENAITE.CORE.SUPERMODEL is free software: you can redistribute it and/or
+# SENAITE.APP.SUPERMODEL is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 2.
 #
@@ -19,7 +19,7 @@
 # Some rights reserved, see README and LICENSE.
 
 from bika.lims import api
-from senaite.core.supermodel.interfaces import ISuperModel
+from senaite.app.supermodel.interfaces import ISuperModel
 from zope.component import queryAdapter
 
 
@@ -29,7 +29,7 @@ def returns_super_model(func):
 
     def to_super_model(obj):
         # avoid circular imports
-        from senaite.core.supermodel import SuperModel
+        from senaite.app.supermodel import SuperModel
 
         # Object is already a Publication Object, return immediately
         if isinstance(obj, SuperModel):

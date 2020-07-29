@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of SENAITE.CORE.SUPERMODEL.
+# This file is part of SENAITE.APP.SUPERMODEL.
 #
-# SENAITE.CORE.SUPERMODEL is free software: you can redistribute it and/or
+# SENAITE.APP.SUPERMODEL is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 2.
 #
@@ -26,9 +26,9 @@ from Products.CMFPlone.utils import safe_callable
 from Products.CMFPlone.utils import safe_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.ZCatalog.Lazy import LazyMap
-from senaite.core.supermodel import logger
-from senaite.core.supermodel.decorators import returns_super_model
-from senaite.core.supermodel.interfaces import ISuperModel
+from senaite.app.supermodel import logger
+from senaite.app.supermodel.decorators import returns_super_model
+from senaite.app.supermodel.interfaces import ISuperModel
 from zope.interface import implements
 
 _marker = object()

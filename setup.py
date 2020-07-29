@@ -14,7 +14,7 @@ with open("CHANGES.rst", "r") as fh:
     long_description += fh.read()
 
 setup(
-    name="senaite.core.supermodel",
+    name="senaite.app.supermodel",
     version=version,
     description="A beautiful content wrapper for SENAITE that you will love",
     long_description=long_description,
@@ -31,11 +31,11 @@ setup(
     keywords="",
     author="SENAITE Professional Service Providers",
     author_email="senaite@senaite.com",
-    url="https://github.com/senaite/senaite.core.supermodel",
+    url="https://github.com/senaite/senaite.app.supermodel",
     license="GPLv2",
     packages=find_packages("src", exclude=["ez_setup"]),
     package_dir={"": "src"},
-    namespace_packages=["senaite", "senaite.core"],
+    namespace_packages=["senaite", "senaite.app"],
     include_package_data=True,
     zip_safe=False,
     install_requires=[

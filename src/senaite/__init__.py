@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of SENAITE.CORE.SUPERMODEL.
+# This file is part of SENAITE.APP.SUPERMODEL.
 #
-# SENAITE.CORE.SUPERMODEL is free software: you can redistribute it and/or
+# SENAITE.APP.SUPERMODEL is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, version 2.
 #

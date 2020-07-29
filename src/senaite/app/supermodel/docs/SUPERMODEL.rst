@@ -1,4 +1,4 @@
-SENAITE CORE SUPERMODEL
+SENAITE.APP.SUPERMODEL
 =======================
 
 The SENAITE SUPERMODEL is a content wrapper for objects and catalog brains in
@@ -31,7 +31,7 @@ Needed Imports:
     >>> from plone.app.testing import TEST_USER_ID
     >>> from plone.app.testing import TEST_USER_PASSWORD
     >>> from plone.app.testing import setRoles
-    >>> from senaite.core.supermodel import SuperModel
+    >>> from senaite.app.supermodel import SuperModel
 
 Functional Helpers:
 
