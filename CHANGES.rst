@@ -4,7 +4,13 @@
 - Compatibility with `senaite.core` 2.x
 
 
-1.2.2 (2020-03-02)
+1.2.4 (2020-08-04)
+------------------
+
+- version bump
+
+
+1.2.3 (2020-03-02)
 ------------------
 
 - #10 Fix API import
