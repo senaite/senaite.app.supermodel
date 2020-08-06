@@ -4,7 +4,7 @@ include *.rst
 include *.md
 exclude MANIFEST.in
 recursive-include docs *
-recursive-include src/senaite.app.supermodel *
-recursive-exclude src/senaite.app.supermodel *.pyc
-recursive-exclude src/senaite.app.supermodel/tests *
-recursive-exclude src/senaite.app.supermodel/docs *
+recursive-include src/senaite/app/supermodel *
+recursive-exclude src/senaite/app/supermodel *.pyc
+recursive-exclude src/senaite/app/supermodel/tests *
+recursive-exclude src/senaite/app/supermodel/docs *
