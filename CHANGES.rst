@@ -1,7 +1,7 @@
-2.0.0rc3 (unreleased)
+2.0.0rc3 (2021-01-04)
 ---------------------
 
-- no changes yet
+- Version bump
 
 
 2.0.0rc2 (2020-10-13)
