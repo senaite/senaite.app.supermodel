@@ -29,6 +29,7 @@ from Products.ZCatalog.Lazy import LazyMap
 from senaite.app.supermodel import logger
 from senaite.app.supermodel.decorators import returns_super_model
 from senaite.app.supermodel.interfaces import ISuperModel
+from senaite.core.catalog import AUDITLOG_CATALOG
 from zope.interface import implements
 
 _marker = object()
@@ -294,13 +295,18 @@ class SuperModel(object):
             self._catalog = self.get_catalog_for(self.brain)
         return self._catalog
 
-    def get_catalog_for(self, brain_or_object):
+    def get_catalog_for(self, brain_or_object, default="uid_catalog"):
         """Return the primary catalog for the given brain or object
         """
         if not api.is_object(brain_or_object):
             raise TypeError("Invalid object type %r" % brain_or_object)
-        catalogs = api.get_catalogs_for(brain_or_object, default="uid_catalog")
 
+        catalogs = api.get_catalogs_for(brain_or_object, default=default)
+
+        # filter out auditlog catalog
+        catalogs = filter(lambda cat: cat.id != AUDITLOG_CATALOG, catalogs)
+        if not catalogs:
+            return api.get_tool(default)
         return catalogs[0]
 
     def get_brain_by_uid(self, uid):
