@@ -30,6 +30,7 @@ from senaite.app.supermodel import logger
 from senaite.app.supermodel.decorators import returns_super_model
 from senaite.app.supermodel.interfaces import ISuperModel
 from senaite.core.catalog import AUDITLOG_CATALOG
+from senaite.core.interfaces import ISenaiteCatalog
 from zope.interface import implements
 
 _marker = object()
@@ -307,8 +308,16 @@ class SuperModel(object):
 
         # filter out auditlog catalog
         catalogs = filter(lambda cat: cat.id not in IGNORE_CATALOGS, catalogs)
+
+        # return default catalog when empty
         if not catalogs:
             return api.get_tool(default)
+
+        # prefer senaite catalogs over any other ones
+        for catalog in catalogs:
+            if ISenaiteCatalog.providedBy(catalog):
+                return catalog
+
         return catalogs[0]
 
     def get_brain_by_uid(self, uid):
