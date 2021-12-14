@@ -34,7 +34,7 @@ from zope.interface import implements
 
 _marker = object()
 
-IGNORE_CATALOGS = [AUDITLOG_CATALOG, "portal_catalog"]
+IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
 
 class SuperModel(object):
