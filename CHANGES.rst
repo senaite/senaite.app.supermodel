@@ -1,6 +1,7 @@
 2.0.1 (unreleased)
 ------------------
 
+- #11 Do not consider Auditlog catalog as primary catalog
 
 
 2.0.0 (2021-07-26)
