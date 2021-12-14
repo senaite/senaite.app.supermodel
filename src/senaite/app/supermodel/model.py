@@ -34,6 +34,8 @@ from zope.interface import implements
 
 _marker = object()
 
+IGNORE_CATALOGS = [AUDITLOG_CATALOG, "portal_catalog"]
+
 
 class SuperModel(object):
     """Generic wrapper for content objects
@@ -304,7 +306,7 @@ class SuperModel(object):
         catalogs = api.get_catalogs_for(brain_or_object, default=default)
 
         # filter out auditlog catalog
-        catalogs = filter(lambda cat: cat.id != AUDITLOG_CATALOG, catalogs)
+        catalogs = filter(lambda cat: cat.id not in IGNORE_CATALOGS, catalogs)
         if not catalogs:
             return api.get_tool(default)
         return catalogs[0]
