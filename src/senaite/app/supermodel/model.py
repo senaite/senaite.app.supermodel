@@ -20,11 +20,13 @@
 
 import json
 
+import six
+
+import Missing
 from bika.lims import api
 from DateTime import DateTime
 from Products.CMFPlone.utils import safe_callable
 from Products.CMFPlone.utils import safe_hasattr
-from Products.CMFPlone.utils import safe_unicode
 from Products.ZCatalog.Lazy import LazyMap
 from senaite.app.supermodel import logger
 from senaite.app.supermodel.decorators import returns_super_model
@@ -56,9 +58,11 @@ class SuperModel(object):
     implements(ISuperModel)
 
     def __init__(self, thing):
+        # internal cache
+        self._data = {}
 
         # Type based initializers
-        if isinstance(thing, basestring) and thing == "0":
+        if isinstance(thing, six.string_types) and thing == "0":
             self.init_with_instance(api.get_portal())
         elif api.is_uid(thing):
             self.init_with_uid(thing)
@@ -76,7 +80,6 @@ class SuperModel(object):
         """
         self._brain = None
         self._catalog = None
-        self._data = {}
         self._instance = None
         self._uid = uid
 
@@ -85,7 +88,6 @@ class SuperModel(object):
         """
         self._brain = brain
         self._catalog = self.get_catalog_for(brain)
-        self._data = {}
         self._instance = None
         self._uid = api.get_uid(brain)
 
@@ -94,7 +96,6 @@ class SuperModel(object):
         """
         self._brain = None
         self._catalog = self.get_catalog_for(instance)
-        self._data = {}
         self._instance = instance
         self._uid = api.get_uid(instance)
 
@@ -222,7 +223,7 @@ class SuperModel(object):
         value = self.process_value(value)
 
         # Store value in the internal data dict
-        self._data[name] = value
+        self.data[name] = value
 
         return value
 
@@ -236,12 +237,14 @@ class SuperModel(object):
             if value == "0":
                 return "0"
             return self.to_super_model(value)
+        elif value is Missing.Value:
+            return None
         # Content -> SuperModel
         elif api.is_object(value):
             return self.to_super_model(value)
         # String -> Unicode
-        elif isinstance(value, basestring):
-            return safe_unicode(value).encode("utf-8")
+        elif isinstance(value, six.string_types):
+            return six.ensure_str(value)
         # DateTime -> DateTime
         elif isinstance(value, DateTime):
             return value
@@ -372,6 +375,9 @@ class SuperModel(object):
         # SuperModel -> UID
         if ISuperModel.providedBy(value):
             return str(value)
+        # Catalog Missing.Value -> ""
+        elif value is Missing.Value:
+            return ""
         # DateTime -> ISO8601 format
         elif isinstance(value, (DateTime)):
             return value.ISO8601()
@@ -387,8 +393,8 @@ class SuperModel(object):
         # Callables
         elif safe_callable(value):
             return self.stringify(value())
-        elif isinstance(value, unicode):
-            value = value.encode("utf8")
+        elif isinstance(value, six.string_types):
+            value = six.ensure_str(value)
         try:
             return str(value)
         except (AttributeError, TypeError, ValueError):
