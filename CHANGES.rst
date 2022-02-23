@@ -1,7 +1,7 @@
 2.2.0 (unreleased)
 ------------------
 
-- no changes yet
+- #12 Fix infinite recursion for catalog values containing `Missing.Value`
 
 
 2.1.0 (2022-01-05)
