@@ -216,7 +216,7 @@ Accessing the `brain` property fetches the brain from the right catalog:
 The catalog is automatically set to the primary registered catalog of the ArchetypeTool:
 
     >>> supermodel.catalog
-    <BikaCatalogAnalysisRequestListing at /plone/bika_catalog_analysisrequest_listing>
+    <SampleCatalog at /plone/senaite_catalog_sample>
 
 The instance is not fetched yet:
 
