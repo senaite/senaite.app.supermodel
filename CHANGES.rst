@@ -1,6 +1,7 @@
 2.3.0 (unreleased)
 ------------------
 
+- #14 Ignore fields from extensible metadata schema
 - #13 Remove dependency to Products.TextIndexNG3 (test layer)
 
 

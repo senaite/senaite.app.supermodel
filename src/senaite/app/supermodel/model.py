@@ -39,6 +39,19 @@ _marker = object()
 
 IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
+# Ingore irrelevant fields coming from Archetypes Extensible Metadata
+# -> if required, these fields have to be fetched from the instance itself
+IGNORE_SCHEMA_FIELDS = [
+    "allowDiscussion",  # avoid depreciation message when accessing the field
+    "contributors",
+    "creators",
+    "expirationDate",
+    "language",
+    "location",
+    "rights",
+    "subject",
+]
+
 
 class SuperModel(object):
     """Generic wrapper for content objects
@@ -157,7 +170,14 @@ class SuperModel(object):
 
     def keys(self):
         fields = api.get_fields(self.instance).keys()
-        return filter(lambda f: not f.startswith("_"), fields)
+        keys = []
+        for field in fields:
+            if field.startswith("_"):
+                continue
+            if field in IGNORE_SCHEMA_FIELDS:
+                continue
+            keys.append(field)
+        return keys
 
     def iteritems(self):
         for k in self:
