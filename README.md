@@ -64,3 +64,18 @@ to see the super powers of the `SuperModel` in action.
 
 SENAITE.APP.SUPERMODEL is a dependency of SENAITE.CORE and therefore no
 additional installation steps are required.
+
+
+## License
+
+**SENAITE.APP.SUPERMODEL** Copyright (C) RIDING BYTES & NARALABS
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the [GNU General Public License version
+2](https://github.com/senaite/senaite.app.supermodel/blob/master/LICENSE)
+as published by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
