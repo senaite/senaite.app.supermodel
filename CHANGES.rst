@@ -1,7 +1,7 @@
 2.5.0 (unreleased)
 ------------------
 
-- no changes yet
+- #17 Do not fail when no catalog brain was found
 
 
 2.4.0 (2023-03-10)

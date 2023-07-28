@@ -221,9 +221,12 @@ class SuperModel(object):
 
                 # check if the brain contains this attribute
                 brain = self.brain
-                brain_value = getattr(brain, name, _marker)
-                if brain_value is not _marker:
-                    return brain_value
+                # NOTE: we might get no brain here if the object is temporary,
+                #       e.g. during initialization!
+                if brain:
+                    brain_value = getattr(brain, name, _marker)
+                    if brain_value is not _marker:
+                        return brain_value
 
             return default
         else:
@@ -308,8 +311,12 @@ class SuperModel(object):
         """Catalog brain of the wrapped object
         """
         if self._brain is None:
-            logger.debug("SuperModel::brain: *Fetch catalog brain*")
-            self._brain = self.get_brain_by_uid(self.uid)
+            try:
+                logger.debug("SuperModel::brain: *Fetch catalog brain*")
+                self._brain = self.get_brain_by_uid(self.uid)
+            except ValueError as exc:
+                logger.warn(exc)
+                return None
         return self._brain
 
     @property
@@ -380,9 +387,7 @@ class SuperModel(object):
     def is_valid(self):
         """Self-check
         """
-        try:
-            self.brain
-        except ValueError:
+        if not any([self.brain, self.instance]):
             return False
         return True
 
