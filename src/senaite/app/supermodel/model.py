@@ -36,6 +36,7 @@ from senaite.core.interfaces import ISenaiteCatalog
 from zope.interface import implements
 
 _marker = object()
+_no_brain = object()
 
 IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
@@ -234,8 +235,10 @@ class SuperModel(object):
             accessor = field.getAccessor(self.instance)
             accessor_name = accessor.__name__
 
-            # Metadata lookup by accessor name
-            value = getattr(self.brain, accessor_name, _marker)
+            if not api.is_temporary(self.instance):
+                # Metadata lookup by accessor name
+                value = getattr(self.brain, accessor_name, _marker)
+
             if value is _marker:
                 logger.debug("Add metadata column '{}' to the catalog '{}' "
                              "to increase performance!"
@@ -316,7 +319,12 @@ class SuperModel(object):
                 self._brain = self.get_brain_by_uid(self.uid)
             except ValueError as exc:
                 logger.warn(exc)
-                return None
+                # set to marker object to avoid multiple lookups
+                self._brain = _no_brain
+
+        if self._brain is _no_brain:
+            return None
+
         return self._brain
 
     @property
