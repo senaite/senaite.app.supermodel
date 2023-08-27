@@ -352,7 +352,7 @@ class SuperModel(object):
         """Return the primary catalog for the given brain or object
         """
         if not api.is_object(brain_or_object):
-            raise TypeError("Invalid object type %r" % brain_or_object)
+            return default
 
         catalogs = api.get_catalogs_for(brain_or_object, default=default)
 
