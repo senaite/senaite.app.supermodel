@@ -1,6 +1,7 @@
 2.5.0 (unreleased)
 ------------------
 
+- #18 Avoid brain lookup for temporary objects
 - #17 Do not fail when no catalog brain was found
 
 

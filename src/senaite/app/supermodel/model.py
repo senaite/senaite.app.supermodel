@@ -36,6 +36,7 @@ from senaite.core.interfaces import ISenaiteCatalog
 from zope.interface import implements
 
 _marker = object()
+_no_brain = object()
 
 IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
@@ -95,6 +96,7 @@ class SuperModel(object):
         self._catalog = None
         self._instance = None
         self._uid = uid
+        self._temporary = None
 
     def init_with_brain(self, brain):
         """Initialize with a catalog brain
@@ -103,6 +105,7 @@ class SuperModel(object):
         self._catalog = self.get_catalog_for(brain)
         self._instance = None
         self._uid = api.get_uid(brain)
+        self._temporary = None
 
     def init_with_instance(self, instance):
         """Initialize with an instance object
@@ -111,6 +114,16 @@ class SuperModel(object):
         self._catalog = self.get_catalog_for(instance)
         self._instance = instance
         self._uid = api.get_uid(instance)
+        self._temporary = api.is_temporary(instance)
+
+    def is_temporary(self, instance):
+        """Check if the object is temporary / in initialization
+
+        :returns: True if the passed in object is temporary, otherwise False
+        """
+        if self._temporary is None:
+            self._temporary = api.is_temporary(instance)
+        return self._temporary
 
     def __del__(self):
         """Destructor
@@ -234,8 +247,10 @@ class SuperModel(object):
             accessor = field.getAccessor(self.instance)
             accessor_name = accessor.__name__
 
-            # Metadata lookup by accessor name
-            value = getattr(self.brain, accessor_name, _marker)
+            if self.is_temporary(self.instance) is False:
+                # Metadata lookup by accessor name
+                value = getattr(self.brain, accessor_name, _marker)
+
             if value is _marker:
                 logger.debug("Add metadata column '{}' to the catalog '{}' "
                              "to increase performance!"
@@ -316,7 +331,12 @@ class SuperModel(object):
                 self._brain = self.get_brain_by_uid(self.uid)
             except ValueError as exc:
                 logger.warn(exc)
-                return None
+                # set to marker object to avoid multiple lookups
+                self._brain = _no_brain
+
+        if self._brain is _no_brain:
+            return None
+
         return self._brain
 
     @property
@@ -332,7 +352,7 @@ class SuperModel(object):
         """Return the primary catalog for the given brain or object
         """
         if not api.is_object(brain_or_object):
-            raise TypeError("Invalid object type %r" % brain_or_object)
+            return default
 
         catalogs = api.get_catalogs_for(brain_or_object, default=default)
 
