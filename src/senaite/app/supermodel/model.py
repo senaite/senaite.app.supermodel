@@ -96,6 +96,7 @@ class SuperModel(object):
         self._catalog = None
         self._instance = None
         self._uid = uid
+        self._temporary = None
 
     def init_with_brain(self, brain):
         """Initialize with a catalog brain
@@ -104,6 +105,7 @@ class SuperModel(object):
         self._catalog = self.get_catalog_for(brain)
         self._instance = None
         self._uid = api.get_uid(brain)
+        self._temporary = None
 
     def init_with_instance(self, instance):
         """Initialize with an instance object
@@ -112,6 +114,16 @@ class SuperModel(object):
         self._catalog = self.get_catalog_for(instance)
         self._instance = instance
         self._uid = api.get_uid(instance)
+        self._temporary = api.is_temporary(instance)
+
+    def is_temporary(self, instance):
+        """Check if the object is temporary / in initialization
+
+        :returns: True if the passed in object is temporary, otherwise False
+        """
+        if self._temporary is None:
+            self._temporary = api.is_temporary(instance)
+        return self._temporary
 
     def __del__(self):
         """Destructor
@@ -235,7 +247,7 @@ class SuperModel(object):
             accessor = field.getAccessor(self.instance)
             accessor_name = accessor.__name__
 
-            if not api.is_temporary(self.instance):
+            if self.is_temporary(self.instance) is False:
                 # Metadata lookup by accessor name
                 value = getattr(self.brain, accessor_name, _marker)
 
