@@ -1,7 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
-- #19 Process values returned from instance except when a function
+- #19 Support for Dexterity's non-CamelCase fieldnames
 - no changes yet
 
 
