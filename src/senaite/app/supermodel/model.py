@@ -206,10 +206,40 @@ class SuperModel(object):
         return list(self.iteritems())
 
     def get_field(self, name, default=None):
-        accessor = getattr(self.instance, "getField", None)
-        if accessor is None:
+        """Returns the instance's field that matches for the given name
+        """
+        try:
+            fields = api.get_fields(self.instance)
+        except api.APIError:
             return default
-        return accessor(name)
+
+        field = fields.get(name)
+        if field:
+            return field
+
+        # DX fields are not CamelCase but snake_case
+        name = "".join("_" + c.lower() if c.isupper() else c for c in name)
+        field = fields.get(name)
+        if field:
+            return field
+
+        return default
+
+    def get_field_value(self, name, default=None):
+        """Returns the value for the given name and current instance
+        """
+        # always give priority to getters regardless of type
+        accessor_name = "get{}".format(name)
+        accessor = getattr(self.instance, accessor_name, _marker)
+        if accessor is not _marker:
+            return accessor()
+
+        # rely on the fields
+        field = self.get_field(name)
+        if field:
+            return field.get(self.instance)
+
+        return default
 
     def get(self, name, default=None):
         # Internal lookup in the data dict
@@ -219,48 +249,31 @@ class SuperModel(object):
         if value is not _marker:
             return self.data[name]
 
-        # Field lookup on the instance
-        field = self.get_field(name)
+        # Try first to lookup the field value from the instance
+        value = self.get_field_value(name, default=_marker)
 
-        if field is None:
+        if value is _marker:
             # expose non-private members of the instance/brain to have access
             # to e.g. self.absolute_url (function object) or self.review_state
-            if not name.startswith("_") or not name.startswith("__"):
-                # check if the instance contains this attribute
-                instance = self.instance
-                instance_value = getattr(instance, name, _marker)
-                if instance_value is not _marker:
-                    # return the value processed, but only if not a function
-                    value = self.process_value(instance_value, safe_call=False)
-                    if value != instance_value:
-                        # Store value in the internal data dict
-                        self.data[name] = value
-                    return value
+            if name.startswith("_"):
+                return default
 
-                # check if the brain contains this attribute
-                brain = self.brain
-                # NOTE: we might get no brain here if the object is temporary,
-                #       e.g. during initialization!
-                if brain:
-                    brain_value = getattr(brain, name, _marker)
-                    if brain_value is not _marker:
-                        return brain_value
+            # check if the instance contains this attribute
+            instance = self.instance
+            instance_value = getattr(instance, name, _marker)
+            if instance_value is not _marker:
+                return instance_value
+
+            # check if the brain contains this attribute
+            brain = self.brain
+            # NOTE: we might get no brain here if the object is temporary,
+            #       e.g. during initialization!
+            if brain:
+                brain_value = getattr(brain, name, _marker)
+                if brain_value is not _marker:
+                    return brain_value
 
             return default
-        else:
-            # Retrieve field value by accessor name
-            accessor = field.getAccessor(self.instance)
-            accessor_name = accessor.__name__
-
-            if self.is_temporary(self.instance) is False:
-                # Metadata lookup by accessor name
-                value = getattr(self.brain, accessor_name, _marker)
-
-            if value is _marker:
-                logger.debug("Add metadata column '{}' to the catalog '{}' "
-                             "to increase performance!"
-                             .format(accessor_name, self.catalog.__name__))
-                value = accessor()
 
         # Process value for publication
         value = self.process_value(value)
@@ -270,7 +283,7 @@ class SuperModel(object):
 
         return value
 
-    def process_value(self, value, safe_call=True):
+    def process_value(self, value):
         """Process publication value
         """
         # UID -> SuperModel
@@ -298,7 +311,7 @@ class SuperModel(object):
         elif isinstance(value, (dict)):
             return {k: self.process_value(v) for k, v in value.iteritems()}
         # Process function
-        elif safe_call and safe_callable(value):
+        elif safe_callable(value):
             return self.process_value(value())
         # Always return the unprocessed value last
         return value
