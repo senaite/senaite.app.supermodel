@@ -1,6 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
+- #19 Process values returned from instance except when a function
 - no changes yet
 
 

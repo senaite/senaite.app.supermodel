@@ -231,7 +231,11 @@ class SuperModel(object):
                 instance_value = getattr(instance, name, _marker)
                 if instance_value is not _marker:
                     # return the value processed, but only if not a function
-                    return self.process_value(instance_value, safe_call=False)
+                    value = self.process_value(instance_value, safe_call=False)
+                    if value != instance_value:
+                        # Store value in the internal data dict
+                        self.data[name] = value
+                    return value
 
                 # check if the brain contains this attribute
                 brain = self.brain
