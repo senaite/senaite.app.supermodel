@@ -1,7 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
-- #19 Support for Dexterity's non-CamelCase fieldnames
+- #19 Prioritize getters instead of fieldnames on value retrieval from instance
 - no changes yet
 
 
