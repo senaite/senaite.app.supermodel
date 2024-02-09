@@ -217,12 +217,6 @@ class SuperModel(object):
         if field:
             return field
 
-        # DX fields are not CamelCase but snake_case
-        name = "".join("_" + c.lower() if c.isupper() else c for c in name)
-        field = fields.get(name)
-        if field:
-            return field
-
         return default
 
     def get_field_value(self, name, default=None):
