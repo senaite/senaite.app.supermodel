@@ -2,7 +2,6 @@
 ------------------
 
 - #19 Prioritize getters instead of fieldnames on value retrieval from instance
-- no changes yet
 
 
 2.5.0 (2024-01-03)
