@@ -1,7 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
-- no changes yet
+- #19 Prioritize getters instead of fieldnames on value retrieval from instance
 
 
 2.5.0 (2024-01-03)
