@@ -230,7 +230,8 @@ class SuperModel(object):
                 instance = self.instance
                 instance_value = getattr(instance, name, _marker)
                 if instance_value is not _marker:
-                    return instance_value
+                    # return the value processed, but only if not a function
+                    return self.process_value(instance_value, safe_call=False)
 
                 # check if the brain contains this attribute
                 brain = self.brain
@@ -265,7 +266,7 @@ class SuperModel(object):
 
         return value
 
-    def process_value(self, value):
+    def process_value(self, value, safe_call=True):
         """Process publication value
         """
         # UID -> SuperModel
@@ -293,7 +294,7 @@ class SuperModel(object):
         elif isinstance(value, (dict)):
             return {k: self.process_value(v) for k, v in value.iteritems()}
         # Process function
-        elif safe_callable(value):
+        elif safe_call and safe_callable(value):
             return self.process_value(value())
         # Always return the unprocessed value last
         return value
