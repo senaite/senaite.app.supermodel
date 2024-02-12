@@ -222,6 +222,10 @@ class SuperModel(object):
     def get_field_value(self, name, default=None):
         """Returns the value for the given name and current instance
         """
+        # Special "fields" that are widely accessed in lowercase
+        if name in ["title", "description"]:
+            return getattr(self.instance, name)
+
         # always give priority to getters regardless of type
         accessor_name = "get{}".format(name)
         accessor = getattr(self.instance, accessor_name, _marker)
