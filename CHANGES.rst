@@ -1,6 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
+- #20 Special handling of title and description attributes
 - #19 Prioritize getters instead of fieldnames on value retrieval from instance
 
 
