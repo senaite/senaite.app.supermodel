@@ -226,7 +226,7 @@ class SuperModel(object):
         # but we always need to rely on the capitalized function
         if name.lower() in ["title", "description"]:
             func = getattr(self.instance, name.capitalize(), None)
-            return func() if func else ""
+            return func() if func else default
 
         # always give priority to getters regardless of type
         accessor_name = "get{}".format(name)
