@@ -148,3 +148,23 @@ Same principles apply when using brains:
     >>> brain_sm.Title
     <bound method Department.Title of <Department at /plone/setup/departments/department-1>>
 
+    >>> brain_sm.description
+    'My DX description'
+
+    >>> brain_sm.Description()
+    'My DX description'
+
+    >>> brain_sm.Description
+    <bound method Department.Description of <Department at /plone/setup/departments/department-1>>
+
+    >>> brain_sm.department_id
+    'DX'
+
+    >>> brain_sm.getDepartmentID
+    <bound method Department.getDepartmentID of <Department at /plone/setup/departments/department-1>>
+
+    >>> brain_sm.getDepartmentID()
+    'DX'
+
+    >>> brain_sm.DepartmentID
+    'DX'
