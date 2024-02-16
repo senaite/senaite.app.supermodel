@@ -52,8 +52,10 @@ that for a DX type, SuperModel will try first to rely on a getter.
 
 Create one Archetype and one Dexterity objects:
 
-    >>> at = api.create(portal.clients, "Client", title="Archetype object", ClientID="AT")
-    >>> dx = api.create(setup.departments, "Department", title="Dexterity object", department_id="DX")
+    >>> at = api.create(portal.clients, "Client", title="Archetype object",
+    ...                 description="My AT description", ClientID="AT")
+    >>> dx = api.create(setup.departments, "Department", title="Dexterity object",
+    ...                 description="My DX description", department_id="DX")
 
     >>> api.is_at_content(at)
     True
@@ -71,8 +73,14 @@ We expect same behavior with `title` and `description` attributes:
     >>> at_sm.title
     'Archetype object'
 
+    >>> at_sm.description
+    'My AT description'
+
     >>> dx_sm.title
     'Dexterity object'
+
+    >>> dx_sm.description
+    'My DX description'
 
 And same behavior with `Title` and `Description` getters:
 
@@ -87,6 +95,18 @@ And same behavior with `Title` and `Description` getters:
 
     >>> dx_sm.Title
     <bound method Department.Title of <Department at /plone/setup/departments/department-1>>
+
+    >>> at_sm.Description()
+    'My AT description'
+
+    >>> at_sm.Description
+    <bound method Client.Description of <Client at /plone/clients/client-1>>
+
+    >>> dx_sm.Description()
+    'My DX description'
+
+    >>> dx_sm.Description
+    <bound method Department.Description of <Department at /plone/setup/departments/department-1>>
 
 While we expect SuperModel to behave the same with fields:
 
@@ -113,3 +133,18 @@ is no field set with the given name:
 
     >>> dx_sm.DepartmentID
     'DX'
+
+Same principles apply when using brains:
+
+    >>> brain = api.get_brain_by_uid(dx.UID())
+    >>> brain_sm = SuperModel(brain)
+
+    >>> brain_sm.title
+    'Dexterity object'
+
+    >>> brain_sm.Title()
+    'Dexterity object'
+
+    >>> brain_sm.Title
+    <bound method Department.Title of <Department at /plone/setup/departments/department-1>>
+
