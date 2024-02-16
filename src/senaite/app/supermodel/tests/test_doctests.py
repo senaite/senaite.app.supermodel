@@ -18,22 +18,31 @@
 # Copyright 2018-2024 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
+from os.path import join
+
 import doctest
-
 import unittest2 as unittest
-
+from pkg_resources import resource_listdir
 from Testing import ZopeTestCase as ztc
 
 from .base import SimpleTestCase
 
+product = "senaite.app.supermodel"
+files = resource_listdir(product, "docs")
+rst_filenames = [fn for fn in files if fn.endswith(".rst")]
+doctests = [join("../docs", filename) for filename in rst_filenames]
+
+flags = doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE | doctest.REPORT_NDIFF
+
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([
-        ztc.ZopeDocFileSuite(
-            '../docs/SUPERMODEL.rst',
-            test_class=SimpleTestCase,
-            optionflags=doctest.ELLIPSIS | doctest.NORMALIZE_WHITESPACE,
-        ),
-    ])
+    for doctestfile in doctests:
+        suite.addTests([
+            ztc.ZopeDocFileSuite(
+                doctestfile,
+                test_class=SimpleTestCase,
+                optionflags=flags
+            )
+        ])
     return suite

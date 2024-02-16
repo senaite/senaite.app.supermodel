@@ -65,7 +65,8 @@ Setup the testing environment:
 
     >>> portal = self.portal
     >>> request = self.request
-    >>> setup = portal.bika_setup
+    >>> bika_setup = portal.bika_setup
+    >>> setup = portal.setup
     >>> date_now = DateTime().strftime("%Y-%m-%d")
     >>> date_future = (DateTime() + 5).strftime("%Y-%m-%d")
     >>> setRoles(portal, TEST_USER_ID, ['LabManager', ])
@@ -77,13 +78,13 @@ LIMS Setup
 
 Setup the Lab for testing:
 
-    >>> setup.setSelfVerificationEnabled(True)
-    >>> analysisservices = setup.bika_analysisservices
+    >>> bika_setup.setSelfVerificationEnabled(True)
+    >>> analysisservices = bika_setup.bika_analysisservices
     >>> client = api.create(portal.clients, "Client", title="Happy Hills", ClientID="HH")
     >>> contact = api.create(client, "Contact", Firstname="Rita", Lastname="Mohale")
-    >>> labcontact = api.create(setup.bika_labcontacts, "LabContact", Firstname="Lab", Lastname="Manager")
-    >>> department = api.create(setup.bika_departments, "Department", title="Chemistry", Manager=labcontact)
-    >>> sampletype = api.create(setup.bika_sampletypes, "SampleType", title="Water", Prefix="Water")
+    >>> labcontact = api.create(bika_setup.bika_labcontacts, "LabContact", Firstname="Lab", Lastname="Manager")
+    >>> department = api.create(setup.departments, "Department", title="Chemistry", manager=labcontact)
+    >>> sampletype = api.create(bika_setup.bika_sampletypes, "SampleType", title="Water", Prefix="Water")
 
 
 Content Setup
