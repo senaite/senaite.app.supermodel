@@ -15,6 +15,7 @@ Test Setup
     >>> from plone.app.testing import TEST_USER_ID
     >>> from plone.app.testing import setRoles
     >>> from senaite.app.supermodel.model import SuperModel
+    >>> from senaite.core.catalog import SETUP_CATALOG
 
 Variables:
 
@@ -136,7 +137,8 @@ is no field set with the given name:
 
 Same principles apply when using brains:
 
-    >>> brain = api.get_brain_by_uid(dx.UID())
+    >>> cat = api.get_tool(SETUP_CATALOG)
+    >>> brain = cat(UID=dx.UID())[0]
     >>> brain_sm = SuperModel(brain)
 
     >>> brain_sm.title
