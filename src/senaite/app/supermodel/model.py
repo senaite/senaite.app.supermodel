@@ -224,7 +224,7 @@ class SuperModel(object):
         """
         # These are special "fields" that are widely accessed in lowercase,
         # but we always need to rely on the capitalized function
-        if name.lower() in ["title", "description"]:
+        if name in ["title", "description"]:
             func = getattr(self.instance, name.capitalize(), None)
             return func() if func else default
 
