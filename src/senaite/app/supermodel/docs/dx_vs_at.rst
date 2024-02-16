@@ -83,6 +83,20 @@ We expect same behavior with `title` and `description` attributes:
     >>> dx_sm.description
     'My DX description'
 
+And for `id` as well:
+
+    >>> at_sm.id
+    'client-1'
+
+    >>> at_sm.getId()
+    'client-1'
+
+    >>> dx_sm.id
+    'department-1'
+
+    >>> dx_sm.getId()
+    'department-1'
+
 And same behavior with `Title` and `Description` getters:
 
     >>> at_sm.Title()
@@ -140,6 +154,12 @@ Same principles apply when using brains:
     >>> cat = api.get_tool(SETUP_CATALOG)
     >>> brain = cat(UID=dx.UID())[0]
     >>> brain_sm = SuperModel(brain)
+
+    >>> brain_sm.id
+    'department-1'
+
+    >>> brain_sm.getId()
+    'department-1'
 
     >>> brain_sm.title
     'Dexterity object'
