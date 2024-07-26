@@ -1,6 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
+- #23 Rely on getRaw for the retrieval of UIDs from reference-like fields
 - #21 Fix error when using Title() or Description() on DX-based types
 - #20 Special handling of title and description attributes
 - #19 Prioritize getters instead of fieldnames on value retrieval from instance
