@@ -24,6 +24,8 @@ import six
 
 import Missing
 from bika.lims import api
+from bika.lims.interfaces import IARAnalysesField
+from bika.lims.interfaces.field import IUIDReferenceField as IATUIDReference
 from DateTime import DateTime
 from Products.CMFPlone.utils import safe_callable
 from Products.CMFPlone.utils import safe_hasattr
@@ -33,7 +35,9 @@ from senaite.app.supermodel.decorators import returns_super_model
 from senaite.app.supermodel.interfaces import ISuperModel
 from senaite.core.catalog import AUDITLOG_CATALOG
 from senaite.core.interfaces import ISenaiteCatalog
+from senaite.core.schema import IUIDReferenceField as IDXUIDReference
 from zope.interface import implements
+
 
 _marker = object()
 _no_brain = object()
@@ -219,6 +223,20 @@ class SuperModel(object):
 
         return default
 
+    def is_raw_uids_field(self, field):
+        """Returns whether the field stores UIDs internally that can be
+        retrieved by calling getRaw
+        """
+        if IATUIDReference.providedBy(field):
+            # AT-specific UIDReferenceField
+            return True
+        if IDXUIDReference.providedBy(field):
+            # DX-specific UIDReferenceField
+            return True
+        if IARAnalysesField.providedBy(field):
+            return True
+        return False
+
     def get_field_value(self, name, default=None):
         """Returns the value for the given name and current instance
         """
@@ -228,6 +246,14 @@ class SuperModel(object):
             func = getattr(self.instance, name.capitalize(), None)
             return func() if func else default
 
+        # if a reference field, rely on raw data to get UIDs directly
+        field = self.get_field(name)
+        if self.is_raw_uids_field(field):
+            accessor_name = "getRaw{}".format(name)
+            accessor = getattr(self.instance, accessor_name, _marker)
+            if accessor is not _marker:
+                return accessor()
+
         # always give priority to getters regardless of type
         accessor_name = "get{}".format(name)
         accessor = getattr(self.instance, accessor_name, _marker)
@@ -235,7 +261,6 @@ class SuperModel(object):
             return accessor()
 
         # rely on the fields
-        field = self.get_field(name)
         if field:
             return field.get(self.instance)
 
