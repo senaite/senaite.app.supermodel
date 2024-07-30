@@ -24,7 +24,6 @@ import six
 
 import Missing
 from bika.lims import api
-from bika.lims.interfaces import IARAnalysesField
 from bika.lims.interfaces.field import IUIDReferenceField as IATUIDReference
 from DateTime import DateTime
 from Products.CMFPlone.utils import safe_callable
@@ -232,8 +231,6 @@ class SuperModel(object):
             return True
         if IDXUIDReference.providedBy(field):
             # DX-specific UIDReferenceField
-            return True
-        if IARAnalysesField.providedBy(field):
             return True
         return False
 
