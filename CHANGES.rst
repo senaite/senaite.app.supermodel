@@ -1,6 +1,7 @@
 2.6.0 (unreleased)
 ------------------
 
+- #24 Do not take IARAnalysesField as a uidreference-like field
 - #23 Rely on getRaw for the retrieval of UIDs from reference-like fields
 - #21 Fix error when using Title() or Description() on DX-based types
 - #20 Special handling of title and description attributes
