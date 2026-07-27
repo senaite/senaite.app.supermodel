@@ -10,9 +10,6 @@
     <a href="https://pypi.python.org/pypi/senaite.app.supermodel">
       <img src="https://img.shields.io/pypi/v/senaite.app.supermodel.svg?style=flat-square" alt="pypi-version" />
     </a>
-    <a href="https://travis-ci.org/senaite/senaite.app.supermodel">
-      <img src="https://img.shields.io/travis/senaite/senaite.app.supermodel.svg?style=flat-square" alt="travis-ci" />
-    </a>
     <a href="https://github.com/senaite/senaite.app.supermodel/pulls">
       <img src="https://img.shields.io/github/issues-pr/senaite/senaite.app.supermodel.svg?style=flat-square" alt="open PRs" />
     </a>
