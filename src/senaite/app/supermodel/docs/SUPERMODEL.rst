@@ -508,3 +508,63 @@ A model is always truthy and checking it does not wake up the object:
     True
 
 Use `is_valid` to check whether the wrapped object exists.
+
+
+Unknown and Unindexed Objects
+-----------------------------
+
+A `SuperModel` can be created for a UID that does not belong to any object:
+
+    >>> unknown = SuperModel("a" * 32)
+
+It is not valid:
+
+    >>> unknown.is_valid()
+    False
+
+The catalog falls back to the UID catalog:
+
+    >>> unknown.catalog
+    <UIDCatalog at /plone/uid_catalog>
+
+Accessing the instance fails with an API error:
+
+    >>> unknown.instance
+    Traceback (most recent call last):
+    ...
+    APIError: No object found for UID aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+Checking a valid model does not wake up the object:
+
+    >>> supermodel = SuperModel(sample.UID())
+
+    >>> supermodel.is_valid()
+    True
+
+    >>> supermodel._instance is None
+    True
+
+An object that is missing in its primary catalog is still found via the UID
+catalog:
+
+    >>> sample_catalog = api.get_tool("senaite_catalog_sample")
+    >>> sample_path = api.get_path(sample)
+    >>> sample_catalog.uncatalog_object(sample_path)
+
+    >>> unindexed = SuperModel(sample.UID())
+
+    >>> unindexed.brain is None
+    True
+
+    >>> unindexed.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+    >>> unindexed.is_valid()
+    True
+
+    >>> unindexed.getId()
+    'Water-0001'
+
+Restore the catalog entry:
+
+    >>> sample_catalog.catalog_object(sample, sample_path)
