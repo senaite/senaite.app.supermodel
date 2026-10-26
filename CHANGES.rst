@@ -1,6 +1,7 @@
 2.7.0 (unreleased)
 ------------------
 
+- #29 Do not fail on unknown or unindexed UIDs
 - #28 Fix inequality and truth value checks of SuperModels
 - #27 Fix endless recursion when accessing attributes of an uninitialized SuperModel
 - #26 Extend score's buildout.base.cfg and drop the unused Travis config
