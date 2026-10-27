@@ -1,6 +1,7 @@
 2.7.0 (unreleased)
 ------------------
 
+- #36 Reset all internal caches on flush and copy
 - #35 Reduce catalog queries when waking up and wrapping objects
 - #34 Handle dangling references in attribute and item access
 - #33 Do not nest SuperModels created from another SuperModel
