@@ -624,3 +624,50 @@ The cached values are not shared:
 
     >>> outer2.data is outer.data
     False
+
+
+Dangling References
+-------------------
+
+Attribute and item access on a `SuperModel` of a missing object fails with the
+usual exceptions, so that defaults and template fallbacks work:
+
+    >>> dangling = SuperModel("b" * 32)
+
+    >>> getattr(dangling, "Fullname", "n/a")
+    'n/a'
+
+    >>> dangling.title
+    Traceback (most recent call last):
+    ...
+    AttributeError: title
+
+    >>> dangling["title"]
+    Traceback (most recent call last):
+    ...
+    KeyError: 'title'
+
+The `instance` property still raises an API error:
+
+    >>> dangling.instance
+    Traceback (most recent call last):
+    ...
+    APIError: No object found for UID bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+The missing object is looked up only once:
+
+    >>> lookups = []
+    >>> get_object_by_uid = api.get_object_by_uid
+    >>> def counting_get_object_by_uid(*args, **kwargs):
+    ...     lookups.append(args)
+    ...     return get_object_by_uid(*args, **kwargs)
+    >>> api.get_object_by_uid = counting_get_object_by_uid
+
+    >>> dangling = SuperModel("c" * 32)
+    >>> [getattr(dangling, "Fullname", None) for num in range(5)]
+    [None, None, None, None, None]
+
+    >>> len(lookups)
+    1
+
+    >>> api.get_object_by_uid = get_object_by_uid
