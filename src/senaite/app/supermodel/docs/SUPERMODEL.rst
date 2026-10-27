@@ -708,3 +708,61 @@ so that they do not need to be looked up again:
     0
 
     >>> Catalog.searchResults = search_results
+
+
+Flushing and Copying
+--------------------
+
+Flushing a `SuperModel` also resets the schema fields:
+
+    >>> supermodel = SuperModel(sample)
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> supermodel._fields is None
+    False
+
+    >>> supermodel.flush()
+
+    >>> supermodel._fields is None
+    True
+
+A brain that was not found before is looked up again after a flush:
+
+    >>> sample_catalog = api.get_tool("senaite_catalog_sample")
+    >>> sample_path = api.get_path(sample)
+    >>> sample_catalog.uncatalog_object(sample_path)
+
+    >>> supermodel = SuperModel(sample.UID())
+    >>> supermodel.brain is None
+    True
+
+    >>> sample_catalog.catalog_object(sample, sample_path)
+
+    >>> supermodel.brain is None
+    True
+
+    >>> supermodel.flush()
+
+    >>> supermodel.brain
+    <Products.ZCatalog.Catalog.mybrains object at ...>
+
+A copy of a `SuperModel` has its own value cache:
+
+    >>> import copy
+    >>> supermodel = SuperModel(sample)
+    >>> supermodel.getId()
+    'Water-0001'
+    >>> supermodel.CCEmails
+    'hong.kong.phooey@senaite.com'
+
+    >>> clone = copy.copy(supermodel)
+
+    >>> clone.data is supermodel.data
+    False
+
+    >>> clone.data == supermodel.data
+    True
+
+    >>> clone.instance is supermodel.instance
+    True
