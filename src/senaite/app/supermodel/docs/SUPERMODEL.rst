@@ -236,110 +236,63 @@ But as soon as we access the instance property, it will be waked up:
 Cleanup
 -------
 
-Each `SuperModel` cleans up after itself.
+A `SuperModel` does not deactivate the wrapped object when it is destroyed.
+The object lives in the cache of the ZODB connection and might be used by
+other code at the same time. The connection releases its cache at transaction
+boundaries.
 
-To test this, we create some `SuperModel` instances for the same object:
+    >>> transaction.commit()
+    >>> sample_uid = api.get_uid(sample)
 
-    >>> supermodel1 = SuperModel(sample)
-    >>> supermodel2 = SuperModel(sample)
-    >>> supermodel3 = SuperModel(sample)
-
-    >>> supermodel1.instance
-    <AnalysisRequest at /plone/clients/client-1/Water-0001>
-
-    >>> supermodel2.instance
-    <AnalysisRequest at /plone/clients/client-1/Water-0001>
-
-    >>> supermodel3.instance
-    <AnalysisRequest at /plone/clients/client-1/Water-0001>
-
-Deleting *supermodel1* will trigger the `__del__` destructor:
-
-    >>> del supermodel1
-
-The wrapped instance object gets "ghosted" if it was not modified:
-
-    >>> sample._p_changed is None
-    True
-
-    >>> sample._p_state
-    -1
-
-And reactivated (loaded into memory) if it is accessed again by the otehr supermodel:
-
-    >>> supermodel2.get("title")
+    >>> supermodel = SuperModel(sample_uid)
+    >>> supermodel.getId()
     'Water-0001'
 
     >>> sample._p_state
     0
 
-Now we change an attribute of the sample instance:
-
-    >>> sample.setCCEmails("mr.magoo@senaite.com")
-
-    >>> sample._p_changed
-    True
-
-    >>> sample._p_state
-    1
-
-    >>> sample._p_jar
-    <Connection at ...>
-
-Our remaining *supermodel2* should have this value now set:
-
-    >>> supermodel2.CCEmails
-    'mr.magoo@senaite.com'
-
-Now let's also delete *supermodel2*:
-
-    >>> del supermodel2
-
-The instance should still be in the same state:
-
-    >>> sample._p_state
-    1
-
-And retain its value:
-
-    >>> sample.getCCEmails()
-    'mr.magoo@senaite.com'
-
-Because calling `_p_deactivate()` has no effect on changed objects:
-
-    >>> sample._p_deactivate()
-
-    >>> sample._p_state
-    1
-
-    >>> sample.getCCEmails()
-    'mr.magoo@senaite.com'
-
-Only calling `_p_invalidate()` would flush the object:
-
-    >>> sample._p_invalidate()
-
-    >>> sample._p_changed is None
-    True
-
-    >>> sample._p_state
-    -1
-
-    >>> sample.getCCEmails()
-    ''
-
-Our remaining *supermodel3* should reflect this:
-
-    >>> supermodel3.CCEmails
-    ''
+    >>> del supermodel
 
     >>> sample._p_state
     0
 
-    >>> del supermodel3
+Volatile attributes of the object are kept:
 
-    >>> sample._p_state
-    -1
+    >>> sample._v_supermodel = "volatile"
+
+    >>> supermodel = SuperModel(sample_uid)
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> del supermodel
+
+    >>> sample._v_supermodel
+    'volatile'
+
+Code that holds a reference to a mutable attribute of the object does not lose
+its changes:
+
+    >>> sample._supermodel_items = []
+    >>> transaction.commit()
+
+    >>> items = sample._supermodel_items
+
+    >>> supermodel = SuperModel(sample_uid)
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> del supermodel
+
+    >>> items.append("item")
+    >>> sample._p_changed = True
+    >>> transaction.commit()
+
+    >>> sample._supermodel_items
+    ['item']
+
+    >>> del sample._supermodel_items
+    >>> del sample._v_supermodel
+    >>> transaction.commit()
 
 
 Not impressed yet?
