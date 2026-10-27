@@ -14,8 +14,9 @@ Introduction
 ------------
 
 The purpose of this SUPERMODEL is to help coders to access the data from content
-objects. It also ensures that the most effective and efficient method is used to
-achieve a task.
+objects. Field values are fetched once and cached, and referenced objects are
+wrapped into a `SuperModel` again, so that they can be traversed directly, e.g.
+`supermodel.Client.Name`.
 
 
 Test Setup
@@ -162,7 +163,8 @@ catalog are lazily fetched::
     >>> supermodel1.brain
     <Products.ZCatalog.Catalog.mybrains object at ...>
 
-This gives full access to the catalog metadata and content schema::
+Attributes that are not provided by the object are looked up in the catalog
+metadata::
 
     >>> supermodel1.review_state
     'active'

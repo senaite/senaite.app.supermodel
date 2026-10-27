@@ -35,7 +35,7 @@ from senaite.app.supermodel.interfaces import ISuperModel
 from senaite.core.catalog import AUDITLOG_CATALOG
 from senaite.core.interfaces import ISenaiteCatalog
 from senaite.core.schema import IUIDReferenceField as IDXUIDReference
-from zope.interface import implements
+from zope.interface import implementer
 
 
 _marker = object()
@@ -57,22 +57,24 @@ IGNORE_SCHEMA_FIELDS = [
 ]
 
 
+@implementer(ISuperModel)
 class SuperModel(object):
     """Generic wrapper for content objects
 
     This wrapper exposes the schema fields of the wrapped content object as
-    attributes. The schema field values are looked up by their accessors.
+    attributes. The schema field values are looked up by their accessors and
+    cached. Reference fields return the UIDs of the referenced objects, which
+    are wrapped into a `SuperModel` as well.
 
-    If the primary catalog of the wrapped object contains a metadata column
-    with the same name as the accessor, the metadata colum value is used
-    instead.
+    Attributes that are not schema fields are looked up on the instance
+    first and on the catalog brain of the primary catalog last. These values
+    are returned unprocessed and are not cached.
 
     Note: Adapter lookup is done by `portal_type` name, e.g.:
 
     >>> portal_type = api.get_portal_type(self.context)
     >>> adapter = queryAdapter(uid, ISuperModel, name=portal_type)
     """
-    implements(ISuperModel)
 
     # Class level defaults for the internal attributes. They are looked up
     # when the instance was not (fully) initialized, e.g. when `__init__`
@@ -346,7 +348,7 @@ class SuperModel(object):
         # Content -> SuperModel
         elif api.is_object(value):
             return self.to_super_model(value)
-        # String -> Unicode
+        # String -> native string (UTF-8 encoded in Python 2)
         elif isinstance(value, six.string_types):
             return six.ensure_str(value)
         # DateTime -> DateTime
@@ -354,10 +356,10 @@ class SuperModel(object):
             return value
         # Process list values
         elif isinstance(value, (LazyMap, list, tuple)):
-            return map(self.process_value, value)
+            return [self.process_value(item) for item in value]
         # Process dict values
         elif isinstance(value, (dict)):
-            return {k: self.process_value(v) for k, v in value.iteritems()}
+            return {k: self.process_value(v) for k, v in six.iteritems(value)}
         # Process function
         elif safe_callable(value):
             return self.process_value(value())
@@ -517,10 +519,10 @@ class SuperModel(object):
             return value.filename
         # Dict -> convert_value_to_string
         elif isinstance(value, dict):
-            return {k: self.stringify(v) for k, v in value.iteritems()}
+            return {k: self.stringify(v) for k, v in six.iteritems(value)}
         # List -> convert_value_to_string
-        if isinstance(value, (list, tuple, LazyMap)):
-            return map(self.stringify, value)
+        elif isinstance(value, (list, tuple, LazyMap)):
+            return [self.stringify(item) for item in value]
         # Callables
         elif safe_callable(value):
             return self.stringify(value())

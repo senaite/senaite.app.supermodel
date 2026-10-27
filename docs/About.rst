@@ -19,7 +19,7 @@
    :target: https://github.com/senaite/senaite.app.supermodel#readme
 
 .. image:: https://img.shields.io/badge/Built%20with-%E2%9D%A4-brightgreen.svg
-   :target: https://github.com/senaite/senaite.app.supermodel/blob/master/src/senaite.app.supermodel/docs/SUPERMODEL.rst
+   :target: https://github.com/senaite/senaite.app.supermodel/blob/2.x/src/senaite/app/supermodel/docs/SUPERMODEL.rst
 
 .. image:: https://img.shields.io/badge/Made%20for%20SENAITE-%E2%AC%A1-lightgrey.svg
    :target: https://www.senaite.com
@@ -37,8 +37,9 @@ For what is it needed?
 ======================
 
 The purpose of the SUPERMODEL is to help coders to access the data from content
-objects. It also ensures that the most effective and efficient method is used to
-achieve a task.
+objects. Field values are fetched once and cached, and referenced objects are
+wrapped into a `SuperModel` again, so that they can be traversed directly, e.g.
+`supermodel.Client.Name`.
 
 
 How does it work?
@@ -49,10 +50,11 @@ A `SuperModel` can be instantiated with an `UID` of a content object::
     >>> from senaite.app.supermodel import SuperModel
     >>> supermodel = SuperModel('e37c1b659137414e872c08af410f09b4')
 
-This will give transparent access to all schema fields of the wrapped object as
-well to all the metadata columns of the primary catalog of this object::
+This will give transparent access to all schema fields of the wrapped object.
+Field values are retrieved from the object. Other attributes are looked up on
+the object first and in the metadata of the primary catalog last::
 
-    >>> supermodel.MySchemaField'
+    >>> supermodel.MySchemaField
     'Value of MySchemaField'
 
 Please read the `full functional doctest`_ to see the super powers of the
@@ -66,4 +68,4 @@ SENAITE.APP.SUPERMODEL is a dependency of SENAITE.CORE and therefore no
 additional installation steps are required.
 
 
-.. _full functional doctest: https://github.com/senaite/senaite.app.supermodel/blob/master/src/senaite.app.supermodel/docs/SUPERMODEL.rst
+.. _full functional doctest: https://github.com/senaite/senaite.app.supermodel/blob/2.x/src/senaite/app/supermodel/docs/SUPERMODEL.rst
