@@ -44,10 +44,10 @@ _no_instance = object()
 
 IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
-# Ingore irrelevant fields coming from Archetypes Extensible Metadata
+# Ignore irrelevant fields coming from Archetypes Extensible Metadata
 # -> if required, these fields have to be fetched from the instance itself
 IGNORE_SCHEMA_FIELDS = [
-    "allowDiscussion",  # avoid depreciation message when accessing the field
+    "allowDiscussion",  # avoid deprecation message when accessing the field
     "contributors",
     "creators",
     "expirationDate",
@@ -152,11 +152,14 @@ class SuperModel(object):
         self._uid = api.get_uid(instance)
         self._temporary = None
 
-    def is_temporary(self, instance):
+    def is_temporary(self, instance=None):
         """Check if the object is temporary / in initialization
 
-        :returns: True if the passed in object is temporary, otherwise False
+        :param instance: Object to check, defaults to the wrapped instance
+        :returns: True if the object is temporary, otherwise False
         """
+        if instance is None:
+            instance = self.instance
         if self._temporary is None:
             self._temporary = api.is_temporary(instance)
         return self._temporary
@@ -258,7 +261,7 @@ class SuperModel(object):
         return self.__iter__()
 
     def values(self):
-        return [v for _, v in self.iteritems()]
+        return [self[key] for key in self]
 
     def items(self):
         return list(self.iteritems())
@@ -282,7 +285,7 @@ class SuperModel(object):
             return default
 
         field = fields.get(name)
-        if field:
+        if field is not None:
             return field
 
         return default
@@ -323,18 +326,16 @@ class SuperModel(object):
             return accessor()
 
         # rely on the fields
-        if field:
+        if field is not None:
             return field.get(self.instance)
 
         return default
 
     def get(self, name, default=None):
-        # Internal lookup in the data dict
+        # Return the cached value immediately
         value = self.data.get(name, _marker)
-
-        # Return the value immediately
         if value is not _marker:
-            return self.data[name]
+            return value
 
         # Try first to lookup the field value from the instance
         value = self.get_field_value(name, default=_marker)
@@ -449,7 +450,7 @@ class SuperModel(object):
                 logger.debug("SuperModel::brain: *Fetch catalog brain*")
                 self._brain = self.get_brain_by_uid(self.uid)
             except ValueError as exc:
-                logger.warn(exc)
+                logger.warning(exc)
                 # set to marker object to avoid multiple lookups
                 self._brain = _no_brain
 
@@ -575,7 +576,7 @@ class SuperModel(object):
         try:
             return str(value)
         except (AttributeError, TypeError, ValueError):
-            logger.warn("Could not convert {} to string".format(repr(value)))
+            logger.warning("Could not convert {!r} to string".format(value))
             return None
 
     def to_dict(self, converter=None):
