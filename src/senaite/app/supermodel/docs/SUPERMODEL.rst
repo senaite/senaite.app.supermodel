@@ -766,3 +766,29 @@ A copy of a `SuperModel` has its own value cache:
 
     >>> clone.instance is supermodel.instance
     True
+
+
+Errors in Properties
+--------------------
+
+An `AttributeError` raised inside a property of a subclass is not masked:
+
+    >>> class BrokenModel(SuperModel):
+    ...     @property
+    ...     def broken(self):
+    ...         return self.instance.does_not_exist
+    ...     @property
+    ...     def CCEmails(self):
+    ...         return self.instance.does_not_exist
+
+    >>> BrokenModel(sample).broken
+    Traceback (most recent call last):
+    ...
+    AttributeError: ...does_not_exist...
+
+A schema field with the same name is not returned instead:
+
+    >>> BrokenModel(sample).CCEmails
+    Traceback (most recent call last):
+    ...
+    AttributeError: ...does_not_exist...
