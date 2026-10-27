@@ -671,3 +671,40 @@ The missing object is looked up only once:
     1
 
     >>> api.get_object_by_uid = get_object_by_uid
+
+
+Catalog Queries
+---------------
+
+Let's count the catalog queries:
+
+    >>> from Products.ZCatalog.Catalog import Catalog
+    >>> queries = []
+    >>> search_results = Catalog.searchResults
+    >>> def counting_search_results(self, *args, **kwargs):
+    ...     queries.append(args)
+    ...     return search_results(self, *args, **kwargs)
+    >>> Catalog.searchResults = counting_search_results
+
+Waking up the object of a `SuperModel` created with a UID needs one query:
+
+    >>> supermodel = SuperModel(sample.UID())
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> len(queries)
+    1
+
+Referenced objects are wrapped with the catalog brains returned by the getter,
+so that they do not need to be looked up again:
+
+    >>> analyses = supermodel.Analyses
+    >>> del queries[:]
+
+    >>> sorted(analysis.getKeyword() for analysis in analyses)
+    ['Au', 'Cu', 'Fe']
+
+    >>> len(queries)
+    0
+
+    >>> Catalog.searchResults = search_results

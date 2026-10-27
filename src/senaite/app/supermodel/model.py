@@ -417,11 +417,13 @@ class SuperModel(object):
         """
         if self._instance is None:
             logger.debug("SuperModel::instance: *Wakup object*")
-            brain = self.brain
-            if brain is None:
-                # The object is not indexed in its primary catalog, try to
-                # find it via the UID catalog. Set a marker if the object
-                # does not exist to avoid multiple lookups.
+            brain = self._brain
+            if brain is None or brain is _no_brain:
+                # Wake up the object via the UID catalog, which needs one
+                # query instead of two for the primary catalog brain. This
+                # also finds objects that are not indexed in their primary
+                # catalog. Set a marker if the object does not exist to
+                # avoid multiple lookups.
                 self._instance = api.get_object_by_uid(
                     self.uid, default=_no_instance)
             else:

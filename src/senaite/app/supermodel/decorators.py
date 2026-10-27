@@ -46,7 +46,9 @@ def returns_super_model(func):
 
         adapter = queryAdapter(uid, ISuperModel, name=portal_type)
         if adapter is None:
-            return SuperModel(uid)
+            # reuse the brain or object at hand instead of looking it up
+            # again by its UID
+            return SuperModel(obj)
         return adapter
 
     def decorator(*args, **kwargs):
