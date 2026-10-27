@@ -792,3 +792,15 @@ A schema field with the same name is not returned instead:
     Traceback (most recent call last):
     ...
     AttributeError: ...does_not_exist...
+
+
+Temporary Objects
+-----------------
+
+The temporary state is checked for the wrapped instance by default:
+
+    >>> SuperModel(sample.UID()).is_temporary()
+    False
+
+    >>> SuperModel(sample.UID()).is_temporary(sample)
+    False
