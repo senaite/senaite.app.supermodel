@@ -171,7 +171,25 @@ class SuperModel(object):
         return hash(self.uid)
 
     def __eq__(self, other):
+        if not ISuperModel.providedBy(other):
+            return NotImplemented
         return self.uid == other.uid
+
+    def __ne__(self, other):
+        # Python 2 does not derive `!=` from `__eq__`
+        equal = self.__eq__(other)
+        if equal is NotImplemented:
+            return equal
+        return not equal
+
+    def __nonzero__(self):
+        # A model is always truthy. Without this, Python falls back to
+        # `__len__`, which wakes up the object to count its schema fields.
+        # Use `is_valid` to check whether the wrapped object exists.
+        return True
+
+    # Python 3
+    __bool__ = __nonzero__
 
     def __getitem__(self, key):
         value = self.get(key, _marker)

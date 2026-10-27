@@ -459,3 +459,52 @@ Copying a `SuperModel` works as well:
     >>> import copy
     >>> copy.copy(supermodel)
     <SuperModel:UID(...)>
+
+
+Comparison and Truth Value
+--------------------------
+
+Models wrapping the same object are equal, and not unequal:
+
+    >>> supermodel1 = SuperModel(sample.UID())
+    >>> supermodel2 = SuperModel(sample)
+
+    >>> supermodel1 == supermodel2
+    True
+
+    >>> supermodel1 != supermodel2
+    False
+
+Models wrapping different objects are unequal:
+
+    >>> supermodel3 = SuperModel(client)
+
+    >>> supermodel1 == supermodel3
+    False
+
+    >>> supermodel1 != supermodel3
+    True
+
+Comparing a model with other values does not fail:
+
+    >>> supermodel1 == None
+    False
+
+    >>> supermodel1 != None
+    True
+
+    >>> supermodel1 == sample.UID()
+    False
+
+    >>> supermodel1 in [None, "0", supermodel2]
+    True
+
+A model is always truthy and checking it does not wake up the object:
+
+    >>> bool(supermodel1)
+    True
+
+    >>> supermodel1._instance is None
+    True
+
+Use `is_valid` to check whether the wrapped object exists.
