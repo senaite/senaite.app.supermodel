@@ -81,6 +81,7 @@ class SuperModel(object):
     _brain = None
     _catalog = None
     _data = None
+    _fields = None
     _instance = None
     _temporary = None
     _uid = None
@@ -88,6 +89,8 @@ class SuperModel(object):
     def __init__(self, thing):
         # internal cache
         self._data = {}
+        # schema fields of the instance, looked up on first access
+        self._fields = None
 
         # Type based initializers
         if isinstance(thing, six.string_types) and thing == "0":
@@ -116,7 +119,7 @@ class SuperModel(object):
         """Initialize with a catalog brain
         """
         self._brain = brain
-        self._catalog = self.get_catalog_for(brain)
+        self._catalog = None
         self._instance = None
         self._uid = api.get_uid(brain)
         self._temporary = None
@@ -125,10 +128,10 @@ class SuperModel(object):
         """Initialize with an instance object
         """
         self._brain = None
-        self._catalog = self.get_catalog_for(instance)
+        self._catalog = None
         self._instance = instance
         self._uid = api.get_uid(instance)
-        self._temporary = api.is_temporary(instance)
+        self._temporary = None
 
     def is_temporary(self, instance):
         """Check if the object is temporary / in initialization
@@ -198,7 +201,7 @@ class SuperModel(object):
             yield k
 
     def keys(self):
-        fields = api.get_fields(self.instance).keys()
+        fields = self._get_fields().keys()
         keys = []
         for field in fields:
             if field.startswith("_"):
@@ -221,11 +224,21 @@ class SuperModel(object):
     def items(self):
         return list(self.iteritems())
 
+    def _get_fields(self):
+        """Returns the schema fields of the instance
+
+        The fields are looked up once, because computing them is expensive,
+        e.g. for schema extended or behavior based content types.
+        """
+        if self._fields is None:
+            self._fields = api.get_fields(self.instance)
+        return self._fields
+
     def get_field(self, name, default=None):
         """Returns the instance's field that matches for the given name
         """
         try:
-            fields = api.get_fields(self.instance)
+            fields = self._get_fields()
         except api.APIError:
             return default
 
@@ -405,7 +418,11 @@ class SuperModel(object):
         """
         if self._catalog is None:
             logger.debug("SuperModel::catalog: *Fetch catalog*")
-            self._catalog = self.get_catalog_for(self.brain)
+            # use the instance if it is already loaded to avoid a brain lookup
+            obj = self._instance
+            if obj is None:
+                obj = self.brain
+            self._catalog = self.get_catalog_for(obj)
         return self._catalog
 
     def get_catalog_for(self, brain_or_object, default="uid_catalog"):
@@ -414,10 +431,13 @@ class SuperModel(object):
         if not api.is_object(brain_or_object):
             return api.get_tool(default)
 
-        catalogs = api.get_catalogs_for(brain_or_object, default=default)
+        # Lookup the catalogs by portal_type, because passing in a brain
+        # would wake up the object
+        portal_type = api.get_portal_type(brain_or_object)
+        catalogs = api.get_catalogs_for(portal_type)
 
         # filter out auditlog catalog
-        catalogs = filter(lambda cat: cat.id not in IGNORE_CATALOGS, catalogs)
+        catalogs = [cat for cat in catalogs if cat.id not in IGNORE_CATALOGS]
 
         # return default catalog when empty
         if not catalogs:
@@ -436,8 +456,9 @@ class SuperModel(object):
         if uid == "0":
             return api.get_portal()
 
-        # ensure we have the primary catalog
-        if self._catalog is None:
+        # ensure we have the primary catalog. If the instance is already
+        # loaded, the catalog property gets it from there
+        if self._catalog is None and self._instance is None:
             brain = api.get_brain_by_uid(uid, default=_marker)
             if brain is _marker:
                 raise ValueError("No object found for UID '{}'".format(uid))
