@@ -36,8 +36,9 @@ fields, methods and metadata.
 ## For what is it needed?
 
 The purpose of the SUPERMODEL is to help coders to access the data from content
-objects. It also ensures that the most effective and efficient method is used to
-achieve a task.
+objects. Field values are fetched once and cached, and referenced objects are
+wrapped into a `SuperModel` again, so that they can be traversed directly, e.g.
+`supermodel.Client.Name`.
 
 
 ## How does it work?
@@ -47,13 +48,14 @@ A `SuperModel` can be instantiated with an `UID` of a content object:
     >>> from senaite.app.supermodel import SuperModel
     >>> supermodel = SuperModel('e37c1b659137414e872c08af410f09b4')
 
-This will give transparent access to all schema fields of the wrapped object as
-well to all the metadata columns of the primary catalog of this object:
+This will give transparent access to all schema fields of the wrapped object.
+Field values are retrieved from the object. Other attributes are looked up on
+the object first and in the metadata of the primary catalog last:
 
-    >>> supermodel.MySchemaField'
+    >>> supermodel.MySchemaField
     'Value of MySchemaField'
 
-Please read the [full functional doctest](src/senaite.app.supermodel/docs/SUPERMODEL.rst)
+Please read the [full functional doctest](src/senaite/app/supermodel/docs/SUPERMODEL.rst)
 to see the super powers of the `SuperModel` in action.
 
 
