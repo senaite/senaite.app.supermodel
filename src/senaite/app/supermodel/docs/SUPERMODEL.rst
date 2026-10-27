@@ -593,3 +593,34 @@ The schema fields are looked up once and reused for further field accesses:
 
     >>> supermodel._fields is fields
     True
+
+
+Wrapping a SuperModel
+---------------------
+
+A `SuperModel` can be created from another `SuperModel`. This does not nest
+the models and does not wake up the object:
+
+    >>> inner = SuperModel(sample.UID())
+    >>> outer = SuperModel(inner)
+
+    >>> outer == inner
+    True
+
+    >>> inner._instance is None
+    True
+
+    >>> outer.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+An already fetched instance is reused:
+
+    >>> outer2 = SuperModel(outer)
+
+    >>> outer2._instance is outer.instance
+    True
+
+The cached values are not shared:
+
+    >>> outer2.data is outer.data
+    False

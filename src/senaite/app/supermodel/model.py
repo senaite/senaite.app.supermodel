@@ -101,6 +101,10 @@ class SuperModel(object):
             self.init_with_uid(thing)
         elif api.is_brain(thing):
             self.init_with_brain(thing)
+        elif ISuperModel.providedBy(thing):
+            # needs to be checked before `api.is_object`, which is also True
+            # for SuperModels
+            self.init_with_supermodel(thing)
         elif api.is_object(thing):
             self.init_with_instance(thing)
         else:
@@ -125,6 +129,18 @@ class SuperModel(object):
         self._instance = None
         self._uid = api.get_uid(brain)
         self._temporary = None
+
+    def init_with_supermodel(self, model):
+        """Initialize with another SuperModel
+
+        Reuses the brain, catalog and instance the other model already
+        fetched, without waking up the object.
+        """
+        self._brain = model._brain
+        self._catalog = model._catalog
+        self._instance = model._instance
+        self._uid = model.uid
+        self._temporary = model._temporary
 
     def init_with_instance(self, instance):
         """Initialize with an instance object
