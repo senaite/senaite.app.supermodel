@@ -35,18 +35,19 @@ from senaite.app.supermodel.interfaces import ISuperModel
 from senaite.core.catalog import AUDITLOG_CATALOG
 from senaite.core.interfaces import ISenaiteCatalog
 from senaite.core.schema import IUIDReferenceField as IDXUIDReference
-from zope.interface import implements
+from zope.interface import implementer
 
 
 _marker = object()
 _no_brain = object()
+_no_instance = object()
 
 IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
-# Ingore irrelevant fields coming from Archetypes Extensible Metadata
+# Ignore irrelevant fields coming from Archetypes Extensible Metadata
 # -> if required, these fields have to be fetched from the instance itself
 IGNORE_SCHEMA_FIELDS = [
-    "allowDiscussion",  # avoid depreciation message when accessing the field
+    "allowDiscussion",  # avoid deprecation message when accessing the field
     "contributors",
     "creators",
     "expirationDate",
@@ -57,22 +58,24 @@ IGNORE_SCHEMA_FIELDS = [
 ]
 
 
+@implementer(ISuperModel)
 class SuperModel(object):
     """Generic wrapper for content objects
 
     This wrapper exposes the schema fields of the wrapped content object as
-    attributes. The schema field values are looked up by their accessors.
+    attributes. The schema field values are looked up by their accessors and
+    cached. Reference fields return the UIDs of the referenced objects, which
+    are wrapped into a `SuperModel` as well.
 
-    If the primary catalog of the wrapped object contains a metadata column
-    with the same name as the accessor, the metadata colum value is used
-    instead.
+    Attributes that are not schema fields are looked up on the instance
+    first and on the catalog brain of the primary catalog last. These values
+    are returned unprocessed and are not cached.
 
     Note: Adapter lookup is done by `portal_type` name, e.g.:
 
     >>> portal_type = api.get_portal_type(self.context)
     >>> adapter = queryAdapter(uid, ISuperModel, name=portal_type)
     """
-    implements(ISuperModel)
 
     # Class level defaults for the internal attributes. They are looked up
     # when the instance was not (fully) initialized, e.g. when `__init__`
@@ -81,6 +84,7 @@ class SuperModel(object):
     _brain = None
     _catalog = None
     _data = None
+    _fields = None
     _instance = None
     _temporary = None
     _uid = None
@@ -88,6 +92,8 @@ class SuperModel(object):
     def __init__(self, thing):
         # internal cache
         self._data = {}
+        # schema fields of the instance, looked up on first access
+        self._fields = None
 
         # Type based initializers
         if isinstance(thing, six.string_types) and thing == "0":
@@ -96,6 +102,10 @@ class SuperModel(object):
             self.init_with_uid(thing)
         elif api.is_brain(thing):
             self.init_with_brain(thing)
+        elif ISuperModel.providedBy(thing):
+            # needs to be checked before `api.is_object`, which is also True
+            # for SuperModels
+            self.init_with_supermodel(thing)
         elif api.is_object(thing):
             self.init_with_instance(thing)
         else:
@@ -116,49 +126,43 @@ class SuperModel(object):
         """Initialize with a catalog brain
         """
         self._brain = brain
-        self._catalog = self.get_catalog_for(brain)
+        self._catalog = None
         self._instance = None
         self._uid = api.get_uid(brain)
         self._temporary = None
+
+    def init_with_supermodel(self, model):
+        """Initialize with another SuperModel
+
+        Reuses the brain, catalog and instance the other model already
+        fetched, without waking up the object.
+        """
+        self._brain = model._brain
+        self._catalog = model._catalog
+        self._instance = model._instance
+        self._uid = model.uid
+        self._temporary = model._temporary
 
     def init_with_instance(self, instance):
         """Initialize with an instance object
         """
         self._brain = None
-        self._catalog = self.get_catalog_for(instance)
+        self._catalog = None
         self._instance = instance
         self._uid = api.get_uid(instance)
-        self._temporary = api.is_temporary(instance)
+        self._temporary = None
 
-    def is_temporary(self, instance):
+    def is_temporary(self, instance=None):
         """Check if the object is temporary / in initialization
 
-        :returns: True if the passed in object is temporary, otherwise False
+        :param instance: Object to check, defaults to the wrapped instance
+        :returns: True if the object is temporary, otherwise False
         """
+        if instance is None:
+            instance = self.instance
         if self._temporary is None:
             self._temporary = api.is_temporary(instance)
         return self._temporary
-
-    def __del__(self):
-        """Destructor
-
-        Terminates all references for garbage collection
-        """
-        logger.debug("Destroying {}".format(repr(self)))
-
-        # https://zodb.readthedocs.io/en/latest/api.html#persistent.interfaces.IPersistent
-        if self._instance is not None:
-            changed = getattr(self._instance, "_p_changed", 0)
-            # Object is either in the "Ghost" or in the "Saved" state and can
-            # be safely deactivated
-            if not changed:
-                self._instance._p_deactivate()
-
-        self._brain = None
-        self._catalog = None
-        self._data = None
-        self._instance = None
-        self._uid = None
 
     def __repr__(self):
         return "<{}:UID({})>".format(
@@ -192,7 +196,7 @@ class SuperModel(object):
     __bool__ = __nonzero__
 
     def __getitem__(self, key):
-        value = self.get(key, _marker)
+        value = self._get_or_marker(key)
         if value is not _marker:
             return value
         raise KeyError(key)
@@ -206,10 +210,30 @@ class SuperModel(object):
         # wake up the instance
         if name.startswith("_"):
             raise AttributeError(name)
-        value = self.get(name, _marker)
+        # A property of a subclass raised an AttributeError. Evaluate it
+        # again to raise the original error instead of returning a schema
+        # field or attribute of the instance with the same name.
+        descriptor = getattr(type(self), name, None)
+        if isinstance(descriptor, property):
+            return descriptor.__get__(self, type(self))
+        value = self._get_or_marker(name)
         if value is not _marker:
             return value
         raise AttributeError(name)
+
+    def _get_or_marker(self, name):
+        """Returns the value for the given name or `_marker` if not found
+
+        Also returns `_marker` if the wrapped object does not exist, so that
+        attribute and item access raise `AttributeError` and `KeyError` and
+        e.g. `getattr` with a default works for dangling references.
+        """
+        try:
+            return self.get(name, _marker)
+        except api.APIError:
+            if self.is_valid():
+                raise
+            return _marker
 
     def __len__(self):
         return len(self.keys())
@@ -219,7 +243,7 @@ class SuperModel(object):
             yield k
 
     def keys(self):
-        fields = api.get_fields(self.instance).keys()
+        fields = self._get_fields().keys()
         keys = []
         for field in fields:
             if field.startswith("_"):
@@ -237,21 +261,31 @@ class SuperModel(object):
         return self.__iter__()
 
     def values(self):
-        return [v for _, v in self.iteritems()]
+        return [self[key] for key in self]
 
     def items(self):
         return list(self.iteritems())
+
+    def _get_fields(self):
+        """Returns the schema fields of the instance
+
+        The fields are looked up once, because computing them is expensive,
+        e.g. for schema extended or behavior based content types.
+        """
+        if self._fields is None:
+            self._fields = api.get_fields(self.instance)
+        return self._fields
 
     def get_field(self, name, default=None):
         """Returns the instance's field that matches for the given name
         """
         try:
-            fields = api.get_fields(self.instance)
+            fields = self._get_fields()
         except api.APIError:
             return default
 
         field = fields.get(name)
-        if field:
+        if field is not None:
             return field
 
         return default
@@ -292,18 +326,16 @@ class SuperModel(object):
             return accessor()
 
         # rely on the fields
-        if field:
+        if field is not None:
             return field.get(self.instance)
 
         return default
 
     def get(self, name, default=None):
-        # Internal lookup in the data dict
+        # Return the cached value immediately
         value = self.data.get(name, _marker)
-
-        # Return the value immediately
         if value is not _marker:
-            return self.data[name]
+            return value
 
         # Try first to lookup the field value from the instance
         value = self.get_field_value(name, default=_marker)
@@ -354,7 +386,7 @@ class SuperModel(object):
         # Content -> SuperModel
         elif api.is_object(value):
             return self.to_super_model(value)
-        # String -> Unicode
+        # String -> native string (UTF-8 encoded in Python 2)
         elif isinstance(value, six.string_types):
             return six.ensure_str(value)
         # DateTime -> DateTime
@@ -362,10 +394,10 @@ class SuperModel(object):
             return value
         # Process list values
         elif isinstance(value, (LazyMap, list, tuple)):
-            return map(self.process_value, value)
+            return [self.process_value(item) for item in value]
         # Process dict values
         elif isinstance(value, (dict)):
-            return {k: self.process_value(v) for k, v in value.iteritems()}
+            return {k: self.process_value(v) for k, v in six.iteritems(value)}
         # Process function
         elif safe_callable(value):
             return self.process_value(value())
@@ -392,7 +424,21 @@ class SuperModel(object):
         """
         if self._instance is None:
             logger.debug("SuperModel::instance: *Wakup object*")
-            self._instance = api.get_object(self.brain)
+            brain = self._brain
+            if brain is None or brain is _no_brain:
+                # Wake up the object via the UID catalog, which needs one
+                # query instead of two for the primary catalog brain. This
+                # also finds objects that are not indexed in their primary
+                # catalog. Set a marker if the object does not exist to
+                # avoid multiple lookups.
+                self._instance = api.get_object_by_uid(
+                    self.uid, default=_no_instance)
+            else:
+                self._instance = api.get_object(brain)
+
+        if self._instance is _no_instance:
+            raise api.APIError("No object found for UID {}".format(self.uid))
+
         return self._instance
 
     @property
@@ -404,7 +450,7 @@ class SuperModel(object):
                 logger.debug("SuperModel::brain: *Fetch catalog brain*")
                 self._brain = self.get_brain_by_uid(self.uid)
             except ValueError as exc:
-                logger.warn(exc)
+                logger.warning(exc)
                 # set to marker object to avoid multiple lookups
                 self._brain = _no_brain
 
@@ -419,19 +465,26 @@ class SuperModel(object):
         """
         if self._catalog is None:
             logger.debug("SuperModel::catalog: *Fetch catalog*")
-            self._catalog = self.get_catalog_for(self.brain)
+            # use the instance if it is already loaded to avoid a brain lookup
+            obj = self._instance
+            if obj is None:
+                obj = self.brain
+            self._catalog = self.get_catalog_for(obj)
         return self._catalog
 
     def get_catalog_for(self, brain_or_object, default="uid_catalog"):
         """Return the primary catalog for the given brain or object
         """
         if not api.is_object(brain_or_object):
-            return default
+            return api.get_tool(default)
 
-        catalogs = api.get_catalogs_for(brain_or_object, default=default)
+        # Lookup the catalogs by portal_type, because passing in a brain
+        # would wake up the object
+        portal_type = api.get_portal_type(brain_or_object)
+        catalogs = api.get_catalogs_for(portal_type)
 
         # filter out auditlog catalog
-        catalogs = filter(lambda cat: cat.id not in IGNORE_CATALOGS, catalogs)
+        catalogs = [cat for cat in catalogs if cat.id not in IGNORE_CATALOGS]
 
         # return default catalog when empty
         if not catalogs:
@@ -450,8 +503,9 @@ class SuperModel(object):
         if uid == "0":
             return api.get_portal()
 
-        # ensure we have the primary catalog
-        if self._catalog is None:
+        # ensure we have the primary catalog. If the instance is already
+        # loaded, the catalog property gets it from there
+        if self._catalog is None and self._instance is None:
             brain = api.get_brain_by_uid(uid, default=_marker)
             if brain is _marker:
                 raise ValueError("No object found for UID '{}'".format(uid))
@@ -479,11 +533,16 @@ class SuperModel(object):
         return thing
 
     def is_valid(self):
-        """Self-check
+        """Checks if the wrapped object exists
+
+        :returns: True if the object exists, otherwise False
         """
-        if not any([self.brain, self.instance]):
+        if self.brain is not None:
+            return True
+        try:
+            return self.instance is not None
+        except api.APIError:
             return False
-        return True
 
     def stringify(self, value):
         """Convert value to string
@@ -505,10 +564,10 @@ class SuperModel(object):
             return value.filename
         # Dict -> convert_value_to_string
         elif isinstance(value, dict):
-            return {k: self.stringify(v) for k, v in value.iteritems()}
+            return {k: self.stringify(v) for k, v in six.iteritems(value)}
         # List -> convert_value_to_string
-        if isinstance(value, (list, tuple, LazyMap)):
-            return map(self.stringify, value)
+        elif isinstance(value, (list, tuple, LazyMap)):
+            return [self.stringify(item) for item in value]
         # Callables
         elif safe_callable(value):
             return self.stringify(value())
@@ -517,7 +576,7 @@ class SuperModel(object):
         try:
             return str(value)
         except (AttributeError, TypeError, ValueError):
-            logger.warn("Could not convert {} to string".format(repr(value)))
+            logger.warning("Could not convert {!r} to string".format(value))
             return None
 
     def to_dict(self, converter=None):
@@ -539,6 +598,22 @@ class SuperModel(object):
         return json.dumps(self.to_dict())
 
     def flush(self):
-        """Flush the internal data cache
+        """Flush the internal caches
+
+        Resets the cached values and schema fields, and allows to look up
+        a brain or an object again that was not found before.
         """
         self._data = {}
+        self._fields = None
+        if self._brain is _no_brain:
+            self._brain = None
+        if self._instance is _no_instance:
+            self._instance = None
+
+    def __copy__(self):
+        """Returns a shallow copy with its own value cache
+        """
+        clone = self.__class__.__new__(self.__class__)
+        clone.__dict__.update(self.__dict__)
+        clone._data = dict(self.data)
+        return clone

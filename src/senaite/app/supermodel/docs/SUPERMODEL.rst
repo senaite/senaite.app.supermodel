@@ -14,8 +14,9 @@ Introduction
 ------------
 
 The purpose of this SUPERMODEL is to help coders to access the data from content
-objects. It also ensures that the most effective and efficient method is used to
-achieve a task.
+objects. Field values are fetched once and cached, and referenced objects are
+wrapped into a `SuperModel` again, so that they can be traversed directly, e.g.
+`supermodel.Client.Name`.
 
 
 Test Setup
@@ -162,7 +163,8 @@ catalog are lazily fetched::
     >>> supermodel1.brain
     <Products.ZCatalog.Catalog.mybrains object at ...>
 
-This gives full access to the catalog metadata and content schema::
+Attributes that are not provided by the object are looked up in the catalog
+metadata::
 
     >>> supermodel1.review_state
     'active'
@@ -236,110 +238,63 @@ But as soon as we access the instance property, it will be waked up:
 Cleanup
 -------
 
-Each `SuperModel` cleans up after itself.
+A `SuperModel` does not deactivate the wrapped object when it is destroyed.
+The object lives in the cache of the ZODB connection and might be used by
+other code at the same time. The connection releases its cache at transaction
+boundaries.
 
-To test this, we create some `SuperModel` instances for the same object:
+    >>> transaction.commit()
+    >>> sample_uid = api.get_uid(sample)
 
-    >>> supermodel1 = SuperModel(sample)
-    >>> supermodel2 = SuperModel(sample)
-    >>> supermodel3 = SuperModel(sample)
-
-    >>> supermodel1.instance
-    <AnalysisRequest at /plone/clients/client-1/Water-0001>
-
-    >>> supermodel2.instance
-    <AnalysisRequest at /plone/clients/client-1/Water-0001>
-
-    >>> supermodel3.instance
-    <AnalysisRequest at /plone/clients/client-1/Water-0001>
-
-Deleting *supermodel1* will trigger the `__del__` destructor:
-
-    >>> del supermodel1
-
-The wrapped instance object gets "ghosted" if it was not modified:
-
-    >>> sample._p_changed is None
-    True
-
-    >>> sample._p_state
-    -1
-
-And reactivated (loaded into memory) if it is accessed again by the otehr supermodel:
-
-    >>> supermodel2.get("title")
+    >>> supermodel = SuperModel(sample_uid)
+    >>> supermodel.getId()
     'Water-0001'
 
     >>> sample._p_state
     0
 
-Now we change an attribute of the sample instance:
-
-    >>> sample.setCCEmails("mr.magoo@senaite.com")
-
-    >>> sample._p_changed
-    True
-
-    >>> sample._p_state
-    1
-
-    >>> sample._p_jar
-    <Connection at ...>
-
-Our remaining *supermodel2* should have this value now set:
-
-    >>> supermodel2.CCEmails
-    'mr.magoo@senaite.com'
-
-Now let's also delete *supermodel2*:
-
-    >>> del supermodel2
-
-The instance should still be in the same state:
-
-    >>> sample._p_state
-    1
-
-And retain its value:
-
-    >>> sample.getCCEmails()
-    'mr.magoo@senaite.com'
-
-Because calling `_p_deactivate()` has no effect on changed objects:
-
-    >>> sample._p_deactivate()
-
-    >>> sample._p_state
-    1
-
-    >>> sample.getCCEmails()
-    'mr.magoo@senaite.com'
-
-Only calling `_p_invalidate()` would flush the object:
-
-    >>> sample._p_invalidate()
-
-    >>> sample._p_changed is None
-    True
-
-    >>> sample._p_state
-    -1
-
-    >>> sample.getCCEmails()
-    ''
-
-Our remaining *supermodel3* should reflect this:
-
-    >>> supermodel3.CCEmails
-    ''
+    >>> del supermodel
 
     >>> sample._p_state
     0
 
-    >>> del supermodel3
+Volatile attributes of the object are kept:
 
-    >>> sample._p_state
-    -1
+    >>> sample._v_supermodel = "volatile"
+
+    >>> supermodel = SuperModel(sample_uid)
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> del supermodel
+
+    >>> sample._v_supermodel
+    'volatile'
+
+Code that holds a reference to a mutable attribute of the object does not lose
+its changes:
+
+    >>> sample._supermodel_items = []
+    >>> transaction.commit()
+
+    >>> items = sample._supermodel_items
+
+    >>> supermodel = SuperModel(sample_uid)
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> del supermodel
+
+    >>> items.append("item")
+    >>> sample._p_changed = True
+    >>> transaction.commit()
+
+    >>> sample._supermodel_items
+    ['item']
+
+    >>> del sample._supermodel_items
+    >>> del sample._v_supermodel
+    >>> transaction.commit()
 
 
 Not impressed yet?
@@ -508,3 +463,344 @@ A model is always truthy and checking it does not wake up the object:
     True
 
 Use `is_valid` to check whether the wrapped object exists.
+
+
+Unknown and Unindexed Objects
+-----------------------------
+
+A `SuperModel` can be created for a UID that does not belong to any object:
+
+    >>> unknown = SuperModel("a" * 32)
+
+It is not valid:
+
+    >>> unknown.is_valid()
+    False
+
+The catalog falls back to the UID catalog:
+
+    >>> unknown.catalog
+    <UIDCatalog at /plone/uid_catalog>
+
+Accessing the instance fails with an API error:
+
+    >>> unknown.instance
+    Traceback (most recent call last):
+    ...
+    APIError: No object found for UID aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+Checking a valid model does not wake up the object:
+
+    >>> supermodel = SuperModel(sample.UID())
+
+    >>> supermodel.is_valid()
+    True
+
+    >>> supermodel._instance is None
+    True
+
+An object that is missing in its primary catalog is still found via the UID
+catalog:
+
+    >>> sample_catalog = api.get_tool("senaite_catalog_sample")
+    >>> sample_path = api.get_path(sample)
+    >>> sample_catalog.uncatalog_object(sample_path)
+
+    >>> unindexed = SuperModel(sample.UID())
+
+    >>> unindexed.brain is None
+    True
+
+    >>> unindexed.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+    >>> unindexed.is_valid()
+    True
+
+    >>> unindexed.getId()
+    'Water-0001'
+
+Restore the catalog entry:
+
+    >>> sample_catalog.catalog_object(sample, sample_path)
+
+
+Lazy Initialization
+-------------------
+
+Creating a `SuperModel` does not wake up the object, neither with a catalog
+brain nor with a UID:
+
+    >>> sample_uid = api.get_uid(sample)
+    >>> sample_brain = api.get_brain_by_uid(sample_uid)
+    >>> transaction.commit()
+    >>> sample._p_deactivate()
+
+    >>> supermodel = SuperModel(sample_brain)
+
+    >>> sample._p_state
+    -1
+
+Also looking up the primary catalog and the catalog brain keeps the object
+asleep:
+
+    >>> supermodel.catalog
+    <SampleCatalog at /plone/senaite_catalog_sample>
+
+    >>> sample._p_deactivate()
+    >>> supermodel = SuperModel(sample_uid)
+
+    >>> supermodel.brain
+    <Products.ZCatalog.Catalog.mybrains object at ...>
+
+    >>> supermodel.catalog
+    <SampleCatalog at /plone/senaite_catalog_sample>
+
+    >>> sample._p_state
+    -1
+
+A `SuperModel` created with an instance looks up the catalog and the temporary
+state only when they are needed:
+
+    >>> supermodel = SuperModel(sample)
+
+    >>> supermodel._catalog is None
+    True
+
+    >>> supermodel._temporary is None
+    True
+
+    >>> supermodel.catalog
+    <SampleCatalog at /plone/senaite_catalog_sample>
+
+    >>> supermodel.is_temporary(sample)
+    False
+
+The schema fields are looked up once and reused for further field accesses:
+
+    >>> supermodel._fields is None
+    True
+
+    >>> supermodel.CCEmails
+    'hong.kong.phooey@senaite.com'
+
+    >>> fields = supermodel._fields
+    >>> "CCEmails" in fields
+    True
+
+    >>> supermodel.Client
+    <SuperModel:UID(...)>
+
+    >>> supermodel._fields is fields
+    True
+
+
+Wrapping a SuperModel
+---------------------
+
+A `SuperModel` can be created from another `SuperModel`. This does not nest
+the models and does not wake up the object:
+
+    >>> inner = SuperModel(sample.UID())
+    >>> outer = SuperModel(inner)
+
+    >>> outer == inner
+    True
+
+    >>> inner._instance is None
+    True
+
+    >>> outer.instance
+    <AnalysisRequest at /plone/clients/client-1/Water-0001>
+
+An already fetched instance is reused:
+
+    >>> outer2 = SuperModel(outer)
+
+    >>> outer2._instance is outer.instance
+    True
+
+The cached values are not shared:
+
+    >>> outer2.data is outer.data
+    False
+
+
+Dangling References
+-------------------
+
+Attribute and item access on a `SuperModel` of a missing object fails with the
+usual exceptions, so that defaults and template fallbacks work:
+
+    >>> dangling = SuperModel("b" * 32)
+
+    >>> getattr(dangling, "Fullname", "n/a")
+    'n/a'
+
+    >>> dangling.title
+    Traceback (most recent call last):
+    ...
+    AttributeError: title
+
+    >>> dangling["title"]
+    Traceback (most recent call last):
+    ...
+    KeyError: 'title'
+
+The `instance` property still raises an API error:
+
+    >>> dangling.instance
+    Traceback (most recent call last):
+    ...
+    APIError: No object found for UID bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+The missing object is looked up only once:
+
+    >>> lookups = []
+    >>> get_object_by_uid = api.get_object_by_uid
+    >>> def counting_get_object_by_uid(*args, **kwargs):
+    ...     lookups.append(args)
+    ...     return get_object_by_uid(*args, **kwargs)
+    >>> api.get_object_by_uid = counting_get_object_by_uid
+
+    >>> dangling = SuperModel("c" * 32)
+    >>> [getattr(dangling, "Fullname", None) for num in range(5)]
+    [None, None, None, None, None]
+
+    >>> len(lookups)
+    1
+
+    >>> api.get_object_by_uid = get_object_by_uid
+
+
+Catalog Queries
+---------------
+
+Let's count the catalog queries:
+
+    >>> from Products.ZCatalog.Catalog import Catalog
+    >>> queries = []
+    >>> search_results = Catalog.searchResults
+    >>> def counting_search_results(self, *args, **kwargs):
+    ...     queries.append(args)
+    ...     return search_results(self, *args, **kwargs)
+    >>> Catalog.searchResults = counting_search_results
+
+Waking up the object of a `SuperModel` created with a UID needs one query:
+
+    >>> supermodel = SuperModel(sample.UID())
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> len(queries)
+    1
+
+Referenced objects are wrapped with the catalog brains returned by the getter,
+so that they do not need to be looked up again:
+
+    >>> analyses = supermodel.Analyses
+    >>> del queries[:]
+
+    >>> sorted(analysis.getKeyword() for analysis in analyses)
+    ['Au', 'Cu', 'Fe']
+
+    >>> len(queries)
+    0
+
+    >>> Catalog.searchResults = search_results
+
+
+Flushing and Copying
+--------------------
+
+Flushing a `SuperModel` also resets the schema fields:
+
+    >>> supermodel = SuperModel(sample)
+    >>> supermodel.getId()
+    'Water-0001'
+
+    >>> supermodel._fields is None
+    False
+
+    >>> supermodel.flush()
+
+    >>> supermodel._fields is None
+    True
+
+A brain that was not found before is looked up again after a flush:
+
+    >>> sample_catalog = api.get_tool("senaite_catalog_sample")
+    >>> sample_path = api.get_path(sample)
+    >>> sample_catalog.uncatalog_object(sample_path)
+
+    >>> supermodel = SuperModel(sample.UID())
+    >>> supermodel.brain is None
+    True
+
+    >>> sample_catalog.catalog_object(sample, sample_path)
+
+    >>> supermodel.brain is None
+    True
+
+    >>> supermodel.flush()
+
+    >>> supermodel.brain
+    <Products.ZCatalog.Catalog.mybrains object at ...>
+
+A copy of a `SuperModel` has its own value cache:
+
+    >>> import copy
+    >>> supermodel = SuperModel(sample)
+    >>> supermodel.getId()
+    'Water-0001'
+    >>> supermodel.CCEmails
+    'hong.kong.phooey@senaite.com'
+
+    >>> clone = copy.copy(supermodel)
+
+    >>> clone.data is supermodel.data
+    False
+
+    >>> clone.data == supermodel.data
+    True
+
+    >>> clone.instance is supermodel.instance
+    True
+
+
+Errors in Properties
+--------------------
+
+An `AttributeError` raised inside a property of a subclass is not masked:
+
+    >>> class BrokenModel(SuperModel):
+    ...     @property
+    ...     def broken(self):
+    ...         return self.instance.does_not_exist
+    ...     @property
+    ...     def CCEmails(self):
+    ...         return self.instance.does_not_exist
+
+    >>> BrokenModel(sample).broken
+    Traceback (most recent call last):
+    ...
+    AttributeError: ...does_not_exist...
+
+A schema field with the same name is not returned instead:
+
+    >>> BrokenModel(sample).CCEmails
+    Traceback (most recent call last):
+    ...
+    AttributeError: ...does_not_exist...
+
+
+Temporary Objects
+-----------------
+
+The temporary state is checked for the wrapped instance by default:
+
+    >>> SuperModel(sample.UID()).is_temporary()
+    False
+
+    >>> SuperModel(sample.UID()).is_temporary(sample)
+    False

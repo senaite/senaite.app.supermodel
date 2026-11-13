@@ -1,6 +1,16 @@
 2.7.0 (unreleased)
 ------------------
 
+- #38 Code cleanup
+- #37 Do not mask AttributeErrors raised in properties of subclasses
+- #36 Reset all internal caches on flush and copy
+- #35 Reduce catalog queries when waking up and wrapping objects
+- #34 Handle dangling references in attribute and item access
+- #33 Do not nest SuperModels created from another SuperModel
+- #32 Update the documentation and use Python 3 compatible idioms
+- #31 Avoid unnecessary object wakeups and schema lookups
+- #30 Do not deactivate the wrapped object when a SuperModel is destroyed
+- #29 Do not fail on unknown or unindexed UIDs
 - #28 Fix inequality and truth value checks of SuperModels
 - #27 Fix endless recursion when accessing attributes of an uninitialized SuperModel
 - #26 Extend score's buildout.base.cfg and drop the unused Travis config
