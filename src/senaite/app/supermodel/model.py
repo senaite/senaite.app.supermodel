@@ -74,6 +74,17 @@ class SuperModel(object):
     """
     implements(ISuperModel)
 
+    # Class level defaults for the internal attributes. They are looked up
+    # when the instance was not (fully) initialized, e.g. when `__init__`
+    # raised or the object was created via `copy` or `pickle`. Without them,
+    # `__getattr__` would be called and recurse endlessly.
+    _brain = None
+    _catalog = None
+    _data = None
+    _instance = None
+    _temporary = None
+    _uid = None
+
     def __init__(self, thing):
         # internal cache
         self._data = {}
@@ -169,12 +180,17 @@ class SuperModel(object):
         raise KeyError(key)
 
     def __getattr__(self, name):
-        value = self.get(name, _marker)
-        if value is not _marker:
-            return value
         # tab completion in pdbpp
         if name == "__members__":
             return self.keys()
+        # private and special names are never looked up on the wrapped
+        # object, otherwise probes like `hasattr(model, "__html__")` would
+        # wake up the instance
+        if name.startswith("_"):
+            raise AttributeError(name)
+        value = self.get(name, _marker)
+        if value is not _marker:
+            return value
         raise AttributeError(name)
 
     def __len__(self):

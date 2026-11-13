@@ -415,3 +415,47 @@ Only flushing the cache will lookup the new value:
 
     >>> supermodel.CCEmails
     'hong.kong.phooey@senaite.com'
+
+
+Private and Special Attributes
+------------------------------
+
+Private and special attributes are never looked up on the wrapped object, so
+that probing them does not wake up the instance:
+
+    >>> supermodel = SuperModel(sample.UID())
+
+    >>> hasattr(supermodel, "__html__")
+    False
+
+    >>> hasattr(supermodel, "_p_jar")
+    False
+
+    >>> supermodel._instance is None
+    True
+
+A `SuperModel` that was not initialized does not recurse when its internal
+attributes are accessed:
+
+    >>> uninitialized = SuperModel.__new__(SuperModel)
+
+    >>> uninitialized
+    <SuperModel:UID(None)>
+
+    >>> uninitialized._instance is None
+    True
+
+    >>> del uninitialized
+
+This is also the case when the initialization failed:
+
+    >>> SuperModel("not-a-uid")
+    Traceback (most recent call last):
+    ...
+    TypeError: Can not initialize a SuperModel with ''not-a-uid''
+
+Copying a `SuperModel` works as well:
+
+    >>> import copy
+    >>> copy.copy(supermodel)
+    <SuperModel:UID(...)>
