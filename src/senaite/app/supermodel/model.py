@@ -207,6 +207,12 @@ class SuperModel(object):
         # wake up the instance
         if name.startswith("_"):
             raise AttributeError(name)
+        # A property of a subclass raised an AttributeError. Evaluate it
+        # again to raise the original error instead of returning a schema
+        # field or attribute of the instance with the same name.
+        descriptor = getattr(type(self), name, None)
+        if isinstance(descriptor, property):
+            return descriptor.__get__(self, type(self))
         value = self._get_or_marker(name)
         if value is not _marker:
             return value
