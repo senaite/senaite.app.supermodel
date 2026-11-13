@@ -40,6 +40,7 @@ from zope.interface import implementer
 
 _marker = object()
 _no_brain = object()
+_no_instance = object()
 
 IGNORE_CATALOGS = [AUDITLOG_CATALOG]
 
@@ -192,7 +193,7 @@ class SuperModel(object):
     __bool__ = __nonzero__
 
     def __getitem__(self, key):
-        value = self.get(key, _marker)
+        value = self._get_or_marker(key)
         if value is not _marker:
             return value
         raise KeyError(key)
@@ -206,10 +207,24 @@ class SuperModel(object):
         # wake up the instance
         if name.startswith("_"):
             raise AttributeError(name)
-        value = self.get(name, _marker)
+        value = self._get_or_marker(name)
         if value is not _marker:
             return value
         raise AttributeError(name)
+
+    def _get_or_marker(self, name):
+        """Returns the value for the given name or `_marker` if not found
+
+        Also returns `_marker` if the wrapped object does not exist, so that
+        attribute and item access raise `AttributeError` and `KeyError` and
+        e.g. `getattr` with a default works for dangling references.
+        """
+        try:
+            return self.get(name, _marker)
+        except api.APIError:
+            if self.is_valid():
+                raise
+            return _marker
 
     def __len__(self):
         return len(self.keys())
@@ -405,11 +420,16 @@ class SuperModel(object):
             brain = self.brain
             if brain is None:
                 # The object is not indexed in its primary catalog, try to
-                # find it via the UID catalog. Raises an APIError if the
-                # object does not exist.
-                self._instance = api.get_object_by_uid(self.uid)
+                # find it via the UID catalog. Set a marker if the object
+                # does not exist to avoid multiple lookups.
+                self._instance = api.get_object_by_uid(
+                    self.uid, default=_no_instance)
             else:
                 self._instance = api.get_object(brain)
+
+        if self._instance is _no_instance:
+            raise api.APIError("No object found for UID {}".format(self.uid))
+
         return self._instance
 
     @property

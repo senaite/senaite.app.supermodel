@@ -1,6 +1,7 @@
 2.7.0 (unreleased)
 ------------------
 
+- #34 Handle dangling references in attribute and item access
 - #33 Do not nest SuperModels created from another SuperModel
 - #32 Update the documentation and use Python 3 compatible idioms
 - #31 Avoid unnecessary object wakeups and schema lookups
