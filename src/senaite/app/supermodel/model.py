@@ -392,7 +392,14 @@ class SuperModel(object):
         """
         if self._instance is None:
             logger.debug("SuperModel::instance: *Wakup object*")
-            self._instance = api.get_object(self.brain)
+            brain = self.brain
+            if brain is None:
+                # The object is not indexed in its primary catalog, try to
+                # find it via the UID catalog. Raises an APIError if the
+                # object does not exist.
+                self._instance = api.get_object_by_uid(self.uid)
+            else:
+                self._instance = api.get_object(brain)
         return self._instance
 
     @property
@@ -426,7 +433,7 @@ class SuperModel(object):
         """Return the primary catalog for the given brain or object
         """
         if not api.is_object(brain_or_object):
-            return default
+            return api.get_tool(default)
 
         catalogs = api.get_catalogs_for(brain_or_object, default=default)
 
@@ -479,11 +486,16 @@ class SuperModel(object):
         return thing
 
     def is_valid(self):
-        """Self-check
+        """Checks if the wrapped object exists
+
+        :returns: True if the object exists, otherwise False
         """
-        if not any([self.brain, self.instance]):
+        if self.brain is not None:
+            return True
+        try:
+            return self.instance is not None
+        except api.APIError:
             return False
-        return True
 
     def stringify(self, value):
         """Convert value to string
