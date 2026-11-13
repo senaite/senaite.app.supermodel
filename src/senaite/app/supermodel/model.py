@@ -591,6 +591,22 @@ class SuperModel(object):
         return json.dumps(self.to_dict())
 
     def flush(self):
-        """Flush the internal data cache
+        """Flush the internal caches
+
+        Resets the cached values and schema fields, and allows to look up
+        a brain or an object again that was not found before.
         """
         self._data = {}
+        self._fields = None
+        if self._brain is _no_brain:
+            self._brain = None
+        if self._instance is _no_instance:
+            self._instance = None
+
+    def __copy__(self):
+        """Returns a shallow copy with its own value cache
+        """
+        clone = self.__class__.__new__(self.__class__)
+        clone.__dict__.update(self.__dict__)
+        clone._data = dict(self.data)
+        return clone
