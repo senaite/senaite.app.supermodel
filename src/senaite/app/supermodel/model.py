@@ -139,27 +139,6 @@ class SuperModel(object):
             self._temporary = api.is_temporary(instance)
         return self._temporary
 
-    def __del__(self):
-        """Destructor
-
-        Terminates all references for garbage collection
-        """
-        logger.debug("Destroying {}".format(repr(self)))
-
-        # https://zodb.readthedocs.io/en/latest/api.html#persistent.interfaces.IPersistent
-        if self._instance is not None:
-            changed = getattr(self._instance, "_p_changed", 0)
-            # Object is either in the "Ghost" or in the "Saved" state and can
-            # be safely deactivated
-            if not changed:
-                self._instance._p_deactivate()
-
-        self._brain = None
-        self._catalog = None
-        self._data = None
-        self._instance = None
-        self._uid = None
-
     def __repr__(self):
         return "<{}:UID({})>".format(
             self.__class__.__name__, self.uid)
