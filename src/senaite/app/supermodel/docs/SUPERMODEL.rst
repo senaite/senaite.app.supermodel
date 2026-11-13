@@ -521,3 +521,73 @@ catalog:
 Restore the catalog entry:
 
     >>> sample_catalog.catalog_object(sample, sample_path)
+
+
+Lazy Initialization
+-------------------
+
+Creating a `SuperModel` does not wake up the object, neither with a catalog
+brain nor with a UID:
+
+    >>> sample_uid = api.get_uid(sample)
+    >>> sample_brain = api.get_brain_by_uid(sample_uid)
+    >>> transaction.commit()
+    >>> sample._p_deactivate()
+
+    >>> supermodel = SuperModel(sample_brain)
+
+    >>> sample._p_state
+    -1
+
+Also looking up the primary catalog and the catalog brain keeps the object
+asleep:
+
+    >>> supermodel.catalog
+    <SampleCatalog at /plone/senaite_catalog_sample>
+
+    >>> sample._p_deactivate()
+    >>> supermodel = SuperModel(sample_uid)
+
+    >>> supermodel.brain
+    <Products.ZCatalog.Catalog.mybrains object at ...>
+
+    >>> supermodel.catalog
+    <SampleCatalog at /plone/senaite_catalog_sample>
+
+    >>> sample._p_state
+    -1
+
+A `SuperModel` created with an instance looks up the catalog and the temporary
+state only when they are needed:
+
+    >>> supermodel = SuperModel(sample)
+
+    >>> supermodel._catalog is None
+    True
+
+    >>> supermodel._temporary is None
+    True
+
+    >>> supermodel.catalog
+    <SampleCatalog at /plone/senaite_catalog_sample>
+
+    >>> supermodel.is_temporary(sample)
+    False
+
+The schema fields are looked up once and reused for further field accesses:
+
+    >>> supermodel._fields is None
+    True
+
+    >>> supermodel.CCEmails
+    'hong.kong.phooey@senaite.com'
+
+    >>> fields = supermodel._fields
+    >>> "CCEmails" in fields
+    True
+
+    >>> supermodel.Client
+    <SuperModel:UID(...)>
+
+    >>> supermodel._fields is fields
+    True

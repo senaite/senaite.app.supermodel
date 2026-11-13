@@ -1,6 +1,7 @@
 2.7.0 (unreleased)
 ------------------
 
+- #31 Avoid unnecessary object wakeups and schema lookups
 - #30 Do not deactivate the wrapped object when a SuperModel is destroyed
 - #29 Do not fail on unknown or unindexed UIDs
 - #28 Fix inequality and truth value checks of SuperModels
