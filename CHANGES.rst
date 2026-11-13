@@ -1,6 +1,7 @@
 2.7.0 (unreleased)
 ------------------
 
+- #38 Code cleanup
 - #37 Do not mask AttributeErrors raised in properties of subclasses
 - #36 Reset all internal caches on flush and copy
 - #35 Reduce catalog queries when waking up and wrapping objects
